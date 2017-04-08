@@ -2417,6 +2417,13 @@ multiplicity 2
         self.assertEqual(len(aromatic_atoms), 0)
         self.assertEqual(len(aromatic_bonds), 0)
 
+    def test_aromaticity_perception_benzonaphthalene(self):
+        """Test aromaticity perception via get_aromatic_rings for benzonaphthalene with multiple fused bonds."""
+        mol = Molecule(smiles='c1cc2ccc3ccc(c1)c2c3')
+        aromatic_atoms, aromatic_bonds = mol.get_aromatic_rings()
+        self.assertEqual(len(aromatic_atoms), 1)
+        self.assertEqual(len(aromatic_bonds), 1)
+
     def test_aryl_radical_true(self):
         """Test aryl radical perception for phenyl radical."""
         mol = Molecule(smiles='[c]1ccccc1')
