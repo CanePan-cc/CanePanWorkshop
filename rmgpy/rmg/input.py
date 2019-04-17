@@ -619,7 +619,7 @@ def pressureDependence(
     rmg.pressureDependence.rmgmode = True
 
 def options(name='Seed', generateSeedEachIteration=False, saveSeedToDatabase=False, units='si', saveRestartPeriod=None, 
-            generateOutputHTML=False, generatePlots=False, saveSimulationProfiles=False, verboseComments=False, 
+            generateOutputHTML=False, generateLabeledReactions=False, generatePlots=False, saveSimulationProfiles=False, verboseComments=False,
             saveEdgeSpecies=False, keepIrreversible=False, trimolecularProductReversible=True, wallTime='00:00:00:00'):
     rmg.name = name
     rmg.generateSeedEachIteration=generateSeedEachIteration
@@ -628,7 +628,10 @@ def options(name='Seed', generateSeedEachIteration=False, saveSeedToDatabase=Fal
     rmg.saveRestartPeriod = Quantity(saveRestartPeriod) if saveRestartPeriod else None
     if generateOutputHTML:
         logging.warning('Generate Output HTML option was turned on. Note that this will slow down model generation.')
-    rmg.generateOutputHTML = generateOutputHTML 
+    rmg.generateOutputHTML = generateOutputHTML
+    if generateLabeledReactions:
+        logging.warning('Generate Labeled Adjacency List for reactions option was turned on.')
+    rmg.generateLabeledReactions = generateLabeledReactions
     rmg.generatePlots = generatePlots
     rmg.saveSimulationProfiles = saveSimulationProfiles
     rmg.verboseComments = verboseComments
@@ -1000,6 +1003,7 @@ def saveInputFile(path, rmg):
     else:
         f.write('    saveRestartPeriod = None,\n')
     f.write('    generateOutputHTML = {0},\n'.format(rmg.generateOutputHTML))
+    f.write('    generateLabeledReactions = {0},\n'.format(rmg.generateLabeledReactions))
     f.write('    generatePlots = {0},\n'.format(rmg.generatePlots))
     f.write('    saveSimulationProfiles = {0},\n'.format(rmg.saveSimulationProfiles))
     f.write('    saveEdgeSpecies = {0},\n'.format(rmg.saveEdgeSpecies))
@@ -1030,6 +1034,8 @@ def getInput(name):
             return rmg.ml_estimator, rmg.ml_settings
         elif name == 'thermoCentralDatabase':
             return rmg.thermoCentralDatabase
+        elif name == 'generateLabeledReactions':
+            return rmg.generateLabeledReactions
         else:
             raise Exception('Unrecognized keyword: {}'.format(name))
     else:

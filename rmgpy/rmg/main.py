@@ -71,7 +71,7 @@ from pdep import PDepNetwork
 import rmgpy.util as util
 
 from rmgpy.chemkin import ChemkinWriter
-from rmgpy.rmg.output import OutputHTMLWriter
+from rmgpy.rmg.output import OutputHTMLWriter, OutputLabeledReactionsWriter
 from rmgpy.rmg.listener import SimulationProfileWriter, SimulationProfilePlotter
 from rmgpy.restart import RestartWriter
 from rmgpy.qm.main import QMDatabaseWriter
@@ -129,6 +129,7 @@ class RMG(util.Subject):
     `saveRestartPeriod`                 The time period to periodically save a restart file (:class:`Quantity`), or ``None`` for never.
     `units`                             The unit system to use to save output files (currently must be 'si')
     `generateOutputHTML`                ``True`` to draw pictures of the species and reactions, saving a visualized model in an output HTML file.  ``False`` otherwise
+    `generateLabeledReactions`          ``True`` to export labeled adjacency lists for reactions in a text file
     `generatePlots`                     ``True`` to generate plots of the job execution statistics after each iteration, ``False`` otherwise
     `verboseComments`                   ``True`` to keep the verbose comments for database estimates, ``False`` otherwise
     `saveEdgeSpecies`                   ``True`` to save chemkin and HTML files of the edge species, ``False`` otherwise
@@ -202,6 +203,7 @@ class RMG(util.Subject):
         self.saveRestartPeriod = None
         self.units = 'si'
         self.generateOutputHTML = None
+        self.generateLabeledReactions = None
         self.generatePlots = None
         self.saveSimulationProfiles = None
         self.verboseComments = None
@@ -593,6 +595,9 @@ class RMG(util.Subject):
 
         if self.generateOutputHTML:
             self.attach(OutputHTMLWriter(self.outputDirectory))
+
+        if self.generateLabeledReactions:
+            self.attach(OutputLabeledReactionsWriter(self.outputDirectory))
 
         if self.saveRestartPeriod:
             warnings.warn("The option saveRestartPeriod is no longer supported and may be"

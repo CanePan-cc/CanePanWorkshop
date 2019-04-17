@@ -1346,3 +1346,50 @@ class OutputHTMLWriter(object):
     
     def update(self, rmg):
         saveOutput(rmg)
+
+def saveLabeledReactionsFile(path, reactionModel, partCoreEdge='core'):
+    """
+    Save the labeled reaction adjacency lists from the provided reactionModel
+    into a yaml file at the given path
+    :param path: path to save the file
+    :param reactionModel: reaction model
+    :param partCoreEdge: 'core' or 'edge'
+    :return: None
+    """
+    if partCoreEdge == 'core':
+        reactions = [rxn for rxn in reactionModel.core.reactions] + reactionModel.outputReactionList
+    elif partCoreEdge == 'edge':
+        reactions = [rxn for rxn in reactionModel.edge.reactions] + reactionModel.outputReactionList
+
+    with open(path, "w") as f:
+        for i, rxn in enumerate(reactions):
+            f.write("{0:d}\n{1!s}\n{2!s}\n".format(i, rxn, rxn.family))
+            try:
+                f.write(rxn.adjacencyList)
+                f.write("\n")
+            except:
+                pass
+            f.write("============================================================================\n")
+
+def saveLabeledReactions(rmg):
+    """
+    Save the current reaction model's labeled reaction adjacency lists to files.
+    """
+    logging.info('Saving current reaction adjacency lists to file...')
+    saveLabeledReactionsFile(os.path.join(rmg.outputDirectory,'chemkin','reaction_adjacency_lists.txt'), rmg.reactionModel, 'core')
+    if rmg.saveEdgeSpecies == True:
+        logging.info('Saving current model edge reaction adjacency lists to file...')
+        saveLabeledReactionsFile(os.path.join(rmg.outputDirectory,'chemkin','edge_reaction_adjacency_lists.txt' ), rmg.reactionModel, 'edge')
+
+class OutputLabeledReactionsWriter(object):
+    """
+    This class exports labeled adjacency lists for reactions.
+
+    This is to interface with other software tools that wish to
+    automate transition state searches.
+    """
+    def __init__(self, outputDirectory=''):
+        super(OutputLabeledReactionsWriter, self).__init__()
+
+    def update(self, rmg):
+        saveLabeledReactions(rmg)
