@@ -181,6 +181,11 @@ options(
     verboseComments=False,
     # gets RMG to generate edge species chemkin files. Uses lots of memory in output.
     # Helpful for seeing why some reaction are not appearing in core model.
+    generateLabeledReactions=False,
+    # gets RMG to generate a yaml file with the adjacency list for each reaction
+    # with atomic labels corresponding to the reaction recipe (eg. *1, *2, *3)
+    # which could be useful for a tool that is trying to automatically perform
+    # transition state theory calculations. 
     saveEdgeSpecies=False,
     # Sets a time limit in the form DD:HH:MM:SS after which the RMG job will stop. Useful for profiling on jobs that
     # do not converge.
