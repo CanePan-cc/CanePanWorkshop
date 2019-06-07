@@ -852,6 +852,7 @@ Miscellaneous options::
         generatePlots=False,
         saveSimulationProfiles=True,
         verboseComments=False,
+        generateLabeledReactions=False,
         saveEdgeSpecies=True,
         keepIrreversible=True,
         trimolecularProductReversible=False,
@@ -875,6 +876,8 @@ Setting ``generatePlots`` to ``True`` will generate a number of plots describing
 Setting ``saveSimulationProfiles`` to ``True`` will make RMG save csv files of the simulation in .csv files in the ``solver/`` folder.  The filename will be ``simulation_1_26.csv`` where the first number corresponds to the reaciton system, and the second number corresponds to the total number of species at the point of the simulation.  Therefore, the highest second number will indicate the latest simulation that RMG has complete while enlarging the core model.  The information inside the csv file will provide the time, reactor volume in m^3, as well as mole fractions of the individual species.
 
 Setting ``verboseComments`` to ``True`` will make RMG generate chemkin files with complete verbose commentary for the kinetic and thermo parameters.  This will be helpful in debugging what values are being averaged for the kinetics.  Note that this may produce very large files.
+
+Setting ``generateLabeledReactions`` to ``True`` will make RMG generate a yaml file with the adjacency list for each reaction with atomic labels corresponding to the reaction recipe (eg. *1, *2, *3). This could be useful for a tool that is trying to automatically perform transition state theory calculations. The reactants are merged into a single (disjoint) graph, and then the adjacency list is saved before and after applying the recipe (which does not re-order the atoms). These are saved in yaml-formatted files in the chemkin output folder.
 
 Setting ``saveEdgeSpecies`` to ``True`` will make RMG generate chemkin files of the edge reactions in addition to the core model in files such as ``chem_edge.inp`` and ``chem_edge_annotated.inp`` files located inside the ``chemkin`` folder.  These files will be helpful in viewing RMG's estimate for edge reactions and seeing if certain reactions one expects are actually in the edge or not.
 
