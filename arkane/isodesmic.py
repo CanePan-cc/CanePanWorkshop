@@ -424,6 +424,7 @@ class ErrorCancelingScheme:
 
         Returns:
             ScalarQuantity: Standard heat of formation at 298 K calculated for the target species
+            list: reaction list containing all error canceling reactions found
 
         """
         reaction_list = self.multiple_error_canceling_reaction_search(n_reactions_max, milp_software)
@@ -432,7 +433,7 @@ class ErrorCancelingScheme:
         for i, rxn in enumerate(reaction_list):
             h298_list[i] = rxn.calculate_target_thermo().value_si
 
-        return ScalarQuantity(np.median(h298_list), 'J/mol')
+        return ScalarQuantity(np.median(h298_list), 'J/mol'), reaction_list
 
 
 class IsodesmicScheme(ErrorCancelingScheme):
