@@ -56,7 +56,7 @@ class ReferenceSpecies(ArkaneSpecies):
 
     def __init__(self, species=None, smiles=None, adjacency_list=None, inchi=None, reference_data=None,
                  calculated_data=None, preferred_reference=None, index=None, label=None, cas_number=None,
-                 symmetry_number=None, **kwargs):
+                 symmetry_number=None, default_xyz_chemistry=None, **kwargs):
         """
         One of the following must be provided: species, smiles, adjacency_list, inchi.
 
@@ -74,6 +74,8 @@ class ReferenceSpecies(ArkaneSpecies):
             cas_number (str): CAS number associated with the reference species
             symmetry_number (int): The true symmetry number of the species (if not provided will default to the number
                 calculated by RMG)
+            default_xyz_chemistry (str): The model chemistry that should be used to get the default XYZ coordinates for
+                this species.
             **kwargs: Arguments passed to the parent ArkaneSpecies class when loading from a YAML file. Not intended for
                 user input
         """
@@ -96,6 +98,7 @@ class ReferenceSpecies(ArkaneSpecies):
         self.index = index
         self.cas_number = cas_number
         self.preferred_reference = preferred_reference
+        self.default_xyz_chemistry = default_xyz_chemistry
 
         # Alter the symmetry number calculated by RMG to the one provided by the user
         if symmetry_number:
@@ -226,6 +229,24 @@ class ReferenceSpecies(ArkaneSpecies):
         low_level_h298 = self.calculated_data[model_chemistry].thermo_data.H298.__reduce__()[1]
 
         return ErrorCancelingSpecies(molecule, low_level_h298, model_chemistry, high_level_h298, preferred_source)
+
+    def get_default_xyz(self):
+        """
+        Return the XYZ coordinates of the default geometry for this species for use as a starting point for other
+        quantum chemistry calculations
+
+        Notes:
+            The attribute `default_xyz_chemistry` must be set for this reference species, preferable to a model
+            chemistry with a highly accurate equilibrium geometry
+
+        Returns:
+            ArrayQuantity
+        """
+        if self.default_xyz_chemistry:
+            return self.calculated_data[self.default_xyz_chemistry].conformer.coordinates
+        else:
+            raise ValueError('The default model chemistry to use for XYZ coordinates has not been set '
+                             'for {0}'.format(self))
 
 
 class ReferenceDataEntry(RMGObject):
