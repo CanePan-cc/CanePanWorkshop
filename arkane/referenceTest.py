@@ -143,14 +143,16 @@ class TestReferenceDatabase(unittest.TestCase):
     Test that the ReferenceDatabase class functions properly
     """
 
+    def setUp(self):
+        self.database = ReferenceDatabase()
+        self.database.load()
+
     def test_load_main_reference_set(self):
         """
         Test that the main reference set can be loaded properly
         """
-        database = ReferenceDatabase()
-        database.load()
-        self.assertIn('main', database.reference_sets)
-        self.assertIsInstance(database.reference_sets['main'][0], ReferenceSpecies)
+        self.assertIn('main', self.database.reference_sets)
+        self.assertIsInstance(self.database.reference_sets['main'][0], ReferenceSpecies)
 
         # Also test that calling load again appends a new set in the database
         data_dir = os.path.join(FILE_DIR, 'data')
@@ -161,9 +163,9 @@ class TestReferenceDatabase(unittest.TestCase):
             shutil.rmtree(testing_dir)
         os.mkdir(testing_dir)
         shutil.copyfile(example_ref_file, spcs_file)
-        database.load(paths=[testing_dir])
-        self.assertIn('main', database.reference_sets)
-        self.assertIn('testing_set', database.reference_sets)
+        self.database.load(paths=[testing_dir])
+        self.assertIn('main', self.database.reference_sets)
+        self.assertIn('testing_set', self.database.reference_sets)
 
         # Finally, remove the testing directory
         shutil.rmtree(testing_dir)
@@ -209,6 +211,13 @@ class TestReferenceDatabase(unittest.TestCase):
 
             if smiles == 'CCC':  # Test that `precise` is the source since it has the lowest uncertainty
                 self.assertAlmostEqual(spcs.high_level_hf298.value_si, 100.0*1000.0)
+
+    def test_list_available_chemistry(self):
+        """
+        Test that a set of available model chemistries can be return for the reference database
+        """
+        model_chemistry_list = self.database.list_available_chemistry()
+        self.assertIn('wb97m-v/def2-tzvpd', model_chemistry_list)
 
 
 if __name__ == '__main__':

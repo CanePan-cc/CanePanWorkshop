@@ -399,6 +399,28 @@ class ReferenceDatabase(object):
 
         return reference_list
 
+    def list_available_chemistry(self, sets=None):
+        """
+        List the set of available model chemistries present in at least one reference species in the database
+
+        Args:
+            sets (list): A list of the names of the reference sets to include (all sets in the database will be used if
+                not specified or `None`)
+
+        Returns:
+            List[str]
+        """
+        model_chemistry_set = set()
+        if sets is None:  # Load in all of the sets
+            sets = self.reference_sets.keys()
+
+        for set_name in sets:
+            current_set = self.reference_sets[set_name]
+            for ref_spcs in current_set:
+                model_chemistry_set.update(ref_spcs.calculated_data.keys())
+
+        return list(model_chemistry_set)
+
 
 if __name__ == '__main__':
     pass
