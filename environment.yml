@@ -12,10 +12,12 @@ dependencies:
   - cantera >=2.3.0
   - cclib
   - chemprop
+  - coincbc
   - coolprop
   - coverage
   - cython >=0.25.2
   - ffmpeg
+  - glpk
   - gprof2dot
   - graphviz
   - h5py
@@ -37,6 +39,7 @@ dependencies:
   - pydot
   - pydqed >=1.0.0
   - pymongo
+  - pyomo
   - pyparsing
   - pyrdl
   - python >=3.7
