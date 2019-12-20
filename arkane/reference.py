@@ -391,15 +391,16 @@ class ReferenceDatabase(object):
 
             self.reference_sets[set_name] = reference_set
 
-    def extract_model_chemistry(self, model_chemistry, sets=None):
+    def extract_model_chemistry(self, model_chemistry, sets=None, as_error_canceling_species=True):
         """
-        Return a list of ErrorCancelingSpecies objects from the reference species in the database that have entries for
-        the requested model chemistry
+        Return a list of ErrorCancelingSpecies or ReferenceSpecies objects from the reference species in the database
+        that have entries for the requested model chemistry
 
         Args:
             model_chemistry (str): String that describes the level of chemistry used to calculate the low level data
             sets (list): A list of the names of the reference sets to include (all sets in the database will be used if
                 not specified or `None`)
+            as_error_canceling_species (bool): Return ErrorCancelingSpecies objects if True
 
         Returns:
             List[ErrorCancelingSpecies]
@@ -416,7 +417,10 @@ class ReferenceDatabase(object):
                     continue
                 if not ref_spcs.reference_data:  # This reference species does not have any sources, continue on
                     continue
-                reference_list.append(ref_spcs.to_error_canceling_spcs(model_chemistry))
+                reference_list.append(ref_spcs)
+
+        if as_error_canceling_species:
+            reference_list = [s.to_error_canceling_spcs(model_chemistry) for s in reference_list]
 
         return reference_list
 
