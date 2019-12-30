@@ -30,6 +30,7 @@
 import os
 import unittest
 from unittest import mock
+from external.wip import work_in_progress
 
 import rmgpy
 from rmgpy.chemkin import get_species_identifier, load_chemkin_file, load_transport_file, mark_duplicate_reactions, \
@@ -411,6 +412,21 @@ class ChemkinTest(unittest.TestCase):
 
         self.assertEqual(duplicate_flags, expected_flags)
 
+    @work_in_progress
+    def test_unmark_duplicate_reactions(self):
+        """Test that we can properly REMOVE duplicate reaction flags for Chemkin."""
+
+        """
+        We can't do this properly yet. 
+        See https://github.com/ReactionMechanismGenerator/RMG-Py/pull/1856
+        """
+        s1 = Species().from_smiles('CC')
+        s2 = Species().from_smiles('[CH3]')
+        s3 = Species().from_smiles('[OH]')
+        s4 = Species().from_smiles('C[CH2]')
+        s5 = Species().from_smiles('O')
+        s6 = Species().from_smiles('[H]')
+    
         # Try initializing with duplicate=True
         reaction_list = [
             Reaction(reactants=[s1], products=[s2, s2], duplicate=True, kinetics=Arrhenius()),
@@ -422,6 +438,8 @@ class ChemkinTest(unittest.TestCase):
             Reaction(reactants=[s5], products=[s3, s6], duplicate=True, kinetics=Arrhenius(), reversible=False),
             Reaction(reactants=[s3, s6], products=[s5], duplicate=True, kinetics=Arrhenius(), reversible=False),
         ]
+
+        expected_flags = [True, True, False, False, True, True, False, False]
 
         mark_duplicate_reactions(reaction_list)
         duplicate_flags = [rxn.duplicate for rxn in reaction_list]
