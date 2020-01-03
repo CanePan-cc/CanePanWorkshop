@@ -205,7 +205,7 @@ class ReferenceSpecies(ArkaneSpecies):
         molecule = Molecule(smiles=self.smiles)
 
         reference_enthalpy = self.get_reference_enthalpy(source=source)
-        low_level_h298 = self.calculated_data[model_chemistry].thermo_data.H298.__reduce__()[1]
+        low_level_h298 = self.calculated_data[model_chemistry].thermo_data.H298
 
         return ErrorCancelingSpecies(
             molecule, low_level_h298, model_chemistry,
@@ -252,7 +252,7 @@ class ReferenceSpecies(ArkaneSpecies):
                         preferred_source = sources[i]
 
         return ReferenceEnthalpy(
-            self.reference_data[preferred_source].thermo_data.H298.__reduce__()[1],
+            self.reference_data[preferred_source].thermo_data.H298,
             preferred_source
         )
 

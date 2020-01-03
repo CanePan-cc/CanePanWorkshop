@@ -61,9 +61,9 @@ class ErrorCancelingSpecies:
 
         Args:
             molecule (rmgpy.molecule.Molecule): molecule object to represent the species
-            low_level_hf298 (tuple): (Hf298, unit) evaluated using a lower level of theory (e.g. DFT)
+            low_level_hf298 (ScalarQuantity): evaluated using a lower level of theory (e.g. DFT)
             model_chemistry (str): Level of theory used to calculate the low level thermo
-            high_level_hf298 (tuple, optional): (Hf298 , unit) evaluated using a high level of theory
+            high_level_hf298 (ScalarQuantity, optional): evaluated using a high level of theory
                 (e.g. expt. data) that is serving as the "reference" for the isodesmic calculation
             source (str): Literature source from which the high level data was taken
         """
@@ -79,10 +79,10 @@ class ErrorCancelingSpecies:
             raise ValueError('The model chemistry string used to calculate the low level Hf298 must be provided '
                              'consistency checks. Instead, a {0} object was given'.format(type(model_chemistry)))
 
-        self.low_level_hf298 = ScalarQuantity(*low_level_hf298)
+        self.low_level_hf298 = low_level_hf298
 
         # If the species is a reference species, then the high level data is already known
-        self.high_level_hf298 = ScalarQuantity(*high_level_hf298) if high_level_hf298 else None
+        self.high_level_hf298 = high_level_hf298
         self.source = source
 
     def __repr__(self):
