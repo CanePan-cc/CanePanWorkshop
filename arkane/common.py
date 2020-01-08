@@ -84,7 +84,7 @@ class ArkaneSpecies(RMGObject):
                  chemkin_thermo_string='', smiles=None, adjacency_list=None, inchi=None, inchi_key=None, xyz=None,
                  molecular_weight=None, symmetry_number=None, transport_data=None, energy_transfer_model=None,
                  thermo=None, thermo_data=None, label=None, datetime=None, RMG_version=None, reactants=None,
-                 products=None, reaction_label=None, is_ts=None, charge=None, formula=None):
+                 products=None, reaction_label=None, is_ts=None, charge=None, formula=None, multiplicity=None):
         # reactants/products/reaction_label need to be in the init() to avoid error when loading a TS YAML file,
         # but we don't use them
         super(ArkaneSpecies, self).__init__()
@@ -108,6 +108,7 @@ class ArkaneSpecies(RMGObject):
         self.xyz = xyz
         self.molecular_weight = molecular_weight
         self.symmetry_number = symmetry_number
+        self.multiplicity = multiplicity
         self.is_ts = is_ts if is_ts is not None else isinstance(species, TransitionState)
         if not self.is_ts:
             self.chemkin_thermo_string = chemkin_thermo_string
@@ -162,6 +163,7 @@ class ArkaneSpecies(RMGObject):
             self.smiles = species.molecule[0].to_smiles()
             self.adjacency_list = species.molecule[0].to_adjacency_list()
             self.charge = species.molecule[0].get_net_charge()
+            self.multiplicity = species.molecule[0].multiplicity
             self.formula = species.molecule[0].get_formula()
             try:
                 inchi = to_inchi(species.molecule[0], backend='try-all', aug_level=0)
