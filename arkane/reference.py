@@ -38,6 +38,7 @@ import yaml
 from arkane.common import ArkaneSpecies, ARKANE_CLASS_DICT
 from rmgpy.rmgobject import RMGObject
 from rmgpy.species import Species
+from rmgpy.statmech import Conformer
 from rmgpy.thermo import ThermoData
 
 
@@ -196,9 +197,52 @@ class CalculatedDataEntry(RMGObject):
     A class for storing a single entry of statistical mechanical and thermochemistry information calculated at a single
     model chemistry or level of theory
     """
-    def __init__(self):
+    def __init__(self, conformer, thermo_data, t1_diagnostic=None, fod=None):
+        """
+
+        Args:
+            conformer (rmgpy.statmech.Conformer): Conformer object generated from an Arkane job. Stores many pieces of
+                information gained from quantum chemistry calculations, including coordinates, frequencies etc.
+            thermo_data (rmgpy.thermo.ThermoData): Actual thermochemistry values calculated using statistical mechanics
+                at select points. Arkane fits a heat capacity model to this data
+            t1_diagnostic (float): T1 diagnostic for coupled cluster calculations to check if single reference methods
+                are suitable
+            fod (float): Fractional Occupation number weighted electron Density
+        """
         super(CalculatedDataEntry, self).__init__()
-        pass
+        self.conformer = conformer
+        self.thermo_data = thermo_data
+        self.t1_diagnostic = t1_diagnostic
+        self.fod = fod
+
+    def __repr__(self):
+        return str(self.as_dict())
+
+    @property
+    def conformer(self):
+        return self._conformer
+
+    @conformer.setter
+    def conformer(self, value):
+        if value:
+            if isinstance(value, Conformer):
+                self._conformer = value
+            else:
+                raise ValueError('conformer for a CalculatedDataEntry object must be an rmgpy Conformer instance')
+        else:
+            self._conformer = None
+
+    @property
+    def thermo_data(self):
+        return self._thermo_data
+
+    @thermo_data.setter
+    def thermo_data(self, value):
+        if value:
+            if isinstance(value, ThermoData):
+                self._thermo_data = value
+            else:
+                raise ValueError('thermo_data for a CalculatedDataEntry object must be an rmgpy ThermoData object')
 
 
 if __name__ == '__main__':
