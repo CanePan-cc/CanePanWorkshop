@@ -164,6 +164,22 @@ class ReferenceSpecies(ArkaneSpecies):
 
         self.make_object(data, class_dict)
 
+    def update_from_arkane_spcs(self, arkane_species):
+        """
+        Add in calculated data from an existing ArkaneSpecies object.
+
+        Notes:
+            If the model chemistry already exists then this calculated data will be overwritten by the data contained
+            in arkane_species
+
+        Args:
+            arkane_species (ArkaneSpecies):  Matching Arkane species that was run at the desired model chemistry
+        """
+        conformer = arkane_species.conformer
+        thermo_data = arkane_species.thermo_data
+        calc_data = CalculatedDataEntry(conformer, thermo_data)
+        self.calculated_data[arkane_species.level_of_theory] = calc_data
+
     def to_error_canceling_spcs(self, model_chemistry, source=None):
         """
         Extract calculated and reference data from a specified model chemistry and source and return as a new
