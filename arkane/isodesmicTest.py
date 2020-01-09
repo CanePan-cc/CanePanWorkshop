@@ -99,7 +99,7 @@ class TestErrorCancelingReactionAndSpecies(unittest.TestCase):
 
         # This should throw an exception because the model chemistry is different
         with self.assertRaises(ValueError):
-            _ = ErrorCancelingReaction(ethane, {methyl: 2})
+            ErrorCancelingReaction(ethane, {methyl: 2})
 
 
 class TestSpeciesConstraints(unittest.TestCase):

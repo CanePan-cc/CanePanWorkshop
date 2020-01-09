@@ -82,7 +82,7 @@ class TestReferenceSpecies(unittest.TestCase):
         self.assertEqual(ref_from_adj.inchi_key, self.methane.molecule[0].to_inchi_key())
 
         with self.assertRaises(ValueError):
-            _ = ReferenceSpecies()
+            ReferenceSpecies()
 
     def load_ref_from_yaml(self):
         """
@@ -122,7 +122,7 @@ class TestReferenceSpecies(unittest.TestCase):
         self.assertEqual(data_entry.thermo_data.H298.value_si, 100000.0)
 
         with self.assertRaises(ValueError):
-            _ = ReferenceDataEntry({'H298': (100.0, 'kJ/mol')})
+            ReferenceDataEntry({'H298': (100.0, 'kJ/mol')})
 
     def test_calculated_data_entry(self):
         """
@@ -132,10 +132,10 @@ class TestReferenceSpecies(unittest.TestCase):
         self.assertEqual(data_entry.thermo_data.H298.value_si, 100000.0)
 
         with self.assertRaises(ValueError):
-            _ = CalculatedDataEntry({'xyz': '0 0 0'}, self.thermo_data)
+            CalculatedDataEntry({'xyz': '0 0 0'}, self.thermo_data)
 
         with self.assertRaises(ValueError):
-            _ = CalculatedDataEntry(Conformer(), {'H298': (100.0, 'kJ/mol')})
+            CalculatedDataEntry(Conformer(), {'H298': (100.0, 'kJ/mol')})
 
 
 class TestReferenceDatabase(unittest.TestCase):
