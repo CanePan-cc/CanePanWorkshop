@@ -33,6 +33,9 @@ corrections.
 """
 
 import logging
+from typing import Dict, Iterable
+
+import numpy as np
 
 import rmgpy.constants as constants
 
@@ -43,9 +46,16 @@ from arkane.exceptions import AtomEnergyCorrectionError
 ################################################################################
 
 
-def get_energy_correction(model_chemistry, atoms, bonds, coords, nums, multiplicity=1,
-                          atom_energies=None, apply_atom_corrections=True,
-                          apply_bac=False, bac_type='p'):
+def get_energy_correction(model_chemistry: str,
+                          atoms: Dict[str, int],
+                          bonds: Dict[str, int],
+                          coords: np.ndarray,
+                          nums: Iterable[int],
+                          multiplicity: int = 1,
+                          atom_energies: Dict[str, float] = None,
+                          apply_atom_corrections: bool = True,
+                          apply_bac: bool = False,
+                          bac_type: str = 'p') -> float:
     """
     Calculate a correction to the electronic energy obtained from a
     quantum chemistry calculation at a given model chemistry such that
@@ -80,7 +90,7 @@ def get_energy_correction(model_chemistry, atoms, bonds, coords, nums, multiplic
     return corr
 
 
-def get_atom_correction(model_chemistry, atoms, atom_energies=None):
+def get_atom_correction(model_chemistry: str, atoms: Dict[str, int], atom_energies: Dict[str, float] = None) -> float:
     """
     Calculate a correction to the electronic energy obtained from a
     quantum chemistry calculation at a given model chemistry such that
@@ -106,17 +116,17 @@ def get_atom_correction(model_chemistry, atoms, atom_energies=None):
         try:
             atom_energies = data.atom_energies[model_chemistry]
         except KeyError:
-            raise AtomEnergyCorrectionError('Missing atom energies for model chemistry {}'.format(model_chemistry))
+            raise AtomEnergyCorrectionError(f'Missing atom energies for model chemistry {model_chemistry}')
 
     for symbol, count in atoms.items():
         if symbol in atom_energies:
             corr -= count * atom_energies[symbol] * 4.35974394e-18 * constants.Na  # Convert Hartree to J/mol
         else:
             raise AtomEnergyCorrectionError(
-                'An energy correction for element "{}" is unavailable for model chemistry "{}".'
+                f'An energy correction for element "{symbol}" is unavailable for model chemistry "{model_chemistry}".'
                 ' Turn off atom corrections if only running a kinetics jobs'
                 ' or supply a dictionary of atom energies'
-                ' as `atomEnergies` in the input file.'.format(symbol, model_chemistry)
+                ' as `atomEnergies` in the input file.'
             )
 
     # Step 2: Atom energy corrections to reach gas-phase reference state
@@ -126,15 +136,20 @@ def get_atom_correction(model_chemistry, atoms, atom_energies=None):
             corr += count * atom_enthalpy_corrections[symbol] * 4184.0  # Convert kcal/mol to J/mol
         else:
             raise AtomEnergyCorrectionError(
-                'Element "{}" is not yet supported in Arkane.'
+                f'Element "{symbol}" is not yet supported in Arkane.'
                 ' To include it, add its experimental heat of formation in the atom_hf'
-                ' and atom_thermal dictionaries in arkane/encorr/data.py'.format(symbol)
+                ' and atom_thermal dictionaries in arkane/encorr/data.py'
             )
 
     return corr
 
 
-def get_bac(model_chemistry, bonds, coords, nums, bac_type='p', multiplicity=1):
+def get_bac(model_chemistry: str,
+            bonds: Dict[str, int],
+            coords: np.ndarray,
+            nums: Iterable[int],
+            bac_type: str = 'p',
+            multiplicity: int = 1) -> float:
     """
     Returns the bond additivity correction in J/mol.
 
