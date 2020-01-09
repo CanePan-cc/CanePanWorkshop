@@ -185,15 +185,15 @@ class TestErrorCancelingScheme(unittest.TestCase):
     """
 
     def setUp(self):
-        self.propene = ErrorCancelingSpecies(Molecule(smiles='CC=C'), (100, 'kJ/mol'), 'test')
-        self.propane = ErrorCancelingSpecies(Molecule(smiles='CCC'), (75, 'kJ/mol'), 'test')
-        self.butane = ErrorCancelingSpecies(Molecule(smiles='CCCC'), (150, 'kJ/mol'), 'test')
-        self.butene = ErrorCancelingSpecies(Molecule(smiles='C=CCC'), (175, 'kJ/mol'), 'test')
-        self.pentane = ErrorCancelingSpecies(Molecule(smiles='CCCCC'), (200, 'kJ/mol'), 'test')
-        self.pentene = ErrorCancelingSpecies(Molecule(smiles='C=CCCC'), (225, 'kJ/mol'), 'test')
-        self.hexane = ErrorCancelingSpecies(Molecule(smiles='CCCCCC'), (250, 'kJ/mol'), 'test')
-        self.hexene = ErrorCancelingSpecies(Molecule(smiles='C=CCCCC'), (275, 'kJ/mol'), 'test')
-        self.benzene = ErrorCancelingSpecies(Molecule(smiles='c1ccccc1'), (-50, 'kJ/mol'), 'test')
+        self.propene = ErrorCancelingSpecies(Molecule(smiles='CC=C'), (100, 'kJ/mol'), 'test', (105, 'kJ/mol'))
+        self.propane = ErrorCancelingSpecies(Molecule(smiles='CCC'), (75, 'kJ/mol'), 'test', (80, 'kJ/mol'))
+        self.butane = ErrorCancelingSpecies(Molecule(smiles='CCCC'), (150, 'kJ/mol'), 'test', (145, 'kJ/mol'))
+        self.butene = ErrorCancelingSpecies(Molecule(smiles='C=CCC'), (175, 'kJ/mol'), 'test', (180, 'kJ/mol'))
+        self.pentane = ErrorCancelingSpecies(Molecule(smiles='CCCCC'), (200, 'kJ/mol'), 'test', (190, 'kJ/mol'))
+        self.pentene = ErrorCancelingSpecies(Molecule(smiles='C=CCCC'), (225, 'kJ/mol'), 'test', (220, 'kJ/mol'))
+        self.hexane = ErrorCancelingSpecies(Molecule(smiles='CCCCCC'), (250, 'kJ/mol'), 'test', (260, 'kJ/mol'))
+        self.hexene = ErrorCancelingSpecies(Molecule(smiles='C=CCCCC'), (275, 'kJ/mol'), 'test', (275, 'kJ/mol'))
+        self.benzene = ErrorCancelingSpecies(Molecule(smiles='c1ccccc1'), (-50, 'kJ/mol'), 'test', (-80, 'kJ/mol'))
         self.caffeine = ErrorCancelingSpecies(Molecule(smiles='CN1C=NC2=C1C(=O)N(C(=O)N2C)C'), (300, 'kJ/mol'), 'test')
         self.ethyne = ErrorCancelingSpecies(Molecule(smiles='C#C'), (200, 'kJ/mol'), 'test')
 
@@ -243,6 +243,19 @@ class TestErrorCancelingScheme(unittest.TestCase):
         self.assertEqual(len(reaction_list), 5)
         reaction_string = reaction_list.__repr__()
         self.assertTrue(any(rxn_string in reaction_string for rxn_string in [rxn_str1, rxn_str2]))
+
+    def test_calculate_target_enthalpy(self):
+        """
+        Test that ErrorCancelingScheme is able to calculate thermochemistry for the target species
+        """
+        scheme = IsodesmicScheme(self.propene, [self.propane, self.butane, self.butene, self.pentane, self.pentene,
+                                                self.hexane, self.hexene, self.benzene])
+
+        target_thermo = scheme.calculate_target_enthalpy(n_reactions_max=3, milp_software='lpsolve')
+        self.assertEqual(target_thermo.value_si, 115000.0)
+
+        target_thermo = scheme.calculate_target_enthalpy(n_reactions_max=3, milp_software='pyomo')
+        self.assertEqual(target_thermo.value_si, 115000.0)
 
 
 if __name__ == '__main__':
