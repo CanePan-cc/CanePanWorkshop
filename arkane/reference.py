@@ -121,10 +121,8 @@ class ReferenceSpecies(ArkaneSpecies):
     def reference_data(self, value):
         if not value:
             self._reference_data = {}
-        elif isinstance(value, dict):
-            if all(isinstance(source, str) for source in value.keys()):
-                if all(isinstance(data_entry, ReferenceDataEntry) for data_entry in value.values()):
-                    self._reference_data = value
+        elif isinstance(value, dict) and _is_valid_reference_data(value):
+            self._reference_data = value
         else:
             raise ValueError('Reference data must be given as a dictionary of the data source (string) and associated '
                              'ReferenceDataEntry object')
@@ -137,10 +135,8 @@ class ReferenceSpecies(ArkaneSpecies):
     def calculated_data(self, value):
         if not value:
             self._calculated_data = {}
-        elif isinstance(value, dict):
-            if all(isinstance(source, str) for source in value.keys()):
-                if all(isinstance(data_entry, CalculatedDataEntry) for data_entry in value.values()):
-                    self._calculated_data = value
+        elif isinstance(value, dict) and _is_valid_calculated_data(value):
+            self._calculated_data = value
         else:
             raise ValueError('Calculated data must be given as a dictionary of the model chemistry (string) and '
                              'associated CalculatedDataEntry object')
@@ -529,6 +525,36 @@ class ReferenceDatabase(object):
                                  '{1}'.format(label, set_name))
 
         return reference_species_list
+
+
+def _is_valid_reference_data(data_dictionary):
+    """
+    Determine if the given reference_data dictionary is supplied in a valid format
+    Args:
+        data_dictionary (dict): reference_data dictionary
+
+    Returns:
+        bool
+    """
+    if all(isinstance(source, str) for source in data_dictionary.keys()):
+        if all(isinstance(data_entry, ReferenceDataEntry) for data_entry in data_dictionary.values()):
+            return True
+    return False
+
+
+def _is_valid_calculated_data(data_dictionary):
+    """
+    Determine if the given calculated_data dictionary is supplied in a valid format
+    Args:
+        data_dictionary (dict): calculated_data dictionary
+
+    Returns:
+        bool
+    """
+    if all(isinstance(source, str) for source in data_dictionary.keys()):
+        if all(isinstance(data_entry, CalculatedDataEntry) for data_entry in data_dictionary.values()):
+            return True
+    return False
 
 
 if __name__ == '__main__':
