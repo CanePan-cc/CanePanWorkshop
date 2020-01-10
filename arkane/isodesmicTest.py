@@ -50,13 +50,14 @@ class TestErrorCancelingReactionAndSpecies(unittest.TestCase):
     Tests that ErrorCancelingReaction objects and ErrorCancelingSpecies object are properly implemented
     """
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         """
         A method called before each unit test in this class.
         """
-        self.molecule1 = Molecule(smiles='CC')
-        self.molecule2 = Molecule(smiles='[CH3]')
-        self.species = Species(smiles='CC')
+        cls.molecule1 = Molecule(smiles='CC')
+        cls.molecule2 = Molecule(smiles='[CH3]')
+        cls.species = Species(smiles='CC')
 
     def test_error_canceling_species(self):
         """
@@ -107,18 +108,19 @@ class TestSpeciesConstraints(unittest.TestCase):
     A class for testing that the SpeciesConstraint class functions properly
     """
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         """
         A method called before each unit test in this class.
         """
         # Give all species a low level Hf298 of 100 J/mol--this is not important for this test
         hf = (100.0, 'J/mol')
 
-        self.propene = ErrorCancelingSpecies(Molecule(smiles='CC=C'), hf, 'test')
-        self.butane = ErrorCancelingSpecies(Molecule(smiles='CCCC'), hf, 'test')
-        self.benzene = ErrorCancelingSpecies(Molecule(smiles='c1ccccc1'), hf, 'test')
-        self.caffeine = ErrorCancelingSpecies(Molecule(smiles='CN1C=NC2=C1C(=O)N(C(=O)N2C)C'), hf, 'test')
-        self.ethyne = ErrorCancelingSpecies(Molecule(smiles='C#C'), hf, 'test')
+        cls.propene = ErrorCancelingSpecies(Molecule(smiles='CC=C'), hf, 'test')
+        cls.butane = ErrorCancelingSpecies(Molecule(smiles='CCCC'), hf, 'test')
+        cls.benzene = ErrorCancelingSpecies(Molecule(smiles='c1ccccc1'), hf, 'test')
+        cls.caffeine = ErrorCancelingSpecies(Molecule(smiles='CN1C=NC2=C1C(=O)N(C(=O)N2C)C'), hf, 'test')
+        cls.ethyne = ErrorCancelingSpecies(Molecule(smiles='C#C'), hf, 'test')
 
     def test_initializing_constraint_map(self):
         """
@@ -184,18 +186,19 @@ class TestErrorCancelingScheme(unittest.TestCase):
     A class for testing that the ErrorCancelingScheme class functions properly
     """
 
-    def setUp(self):
-        self.propene = ErrorCancelingSpecies(Molecule(smiles='CC=C'), (100, 'kJ/mol'), 'test', (105, 'kJ/mol'))
-        self.propane = ErrorCancelingSpecies(Molecule(smiles='CCC'), (75, 'kJ/mol'), 'test', (80, 'kJ/mol'))
-        self.butane = ErrorCancelingSpecies(Molecule(smiles='CCCC'), (150, 'kJ/mol'), 'test', (145, 'kJ/mol'))
-        self.butene = ErrorCancelingSpecies(Molecule(smiles='C=CCC'), (175, 'kJ/mol'), 'test', (180, 'kJ/mol'))
-        self.pentane = ErrorCancelingSpecies(Molecule(smiles='CCCCC'), (200, 'kJ/mol'), 'test', (190, 'kJ/mol'))
-        self.pentene = ErrorCancelingSpecies(Molecule(smiles='C=CCCC'), (225, 'kJ/mol'), 'test', (220, 'kJ/mol'))
-        self.hexane = ErrorCancelingSpecies(Molecule(smiles='CCCCCC'), (250, 'kJ/mol'), 'test', (260, 'kJ/mol'))
-        self.hexene = ErrorCancelingSpecies(Molecule(smiles='C=CCCCC'), (275, 'kJ/mol'), 'test', (275, 'kJ/mol'))
-        self.benzene = ErrorCancelingSpecies(Molecule(smiles='c1ccccc1'), (-50, 'kJ/mol'), 'test', (-80, 'kJ/mol'))
-        self.caffeine = ErrorCancelingSpecies(Molecule(smiles='CN1C=NC2=C1C(=O)N(C(=O)N2C)C'), (300, 'kJ/mol'), 'test')
-        self.ethyne = ErrorCancelingSpecies(Molecule(smiles='C#C'), (200, 'kJ/mol'), 'test')
+    @classmethod
+    def setUpClass(cls):
+        cls.propene = ErrorCancelingSpecies(Molecule(smiles='CC=C'), (100, 'kJ/mol'), 'test', (105, 'kJ/mol'))
+        cls.propane = ErrorCancelingSpecies(Molecule(smiles='CCC'), (75, 'kJ/mol'), 'test', (80, 'kJ/mol'))
+        cls.butane = ErrorCancelingSpecies(Molecule(smiles='CCCC'), (150, 'kJ/mol'), 'test', (145, 'kJ/mol'))
+        cls.butene = ErrorCancelingSpecies(Molecule(smiles='C=CCC'), (175, 'kJ/mol'), 'test', (180, 'kJ/mol'))
+        cls.pentane = ErrorCancelingSpecies(Molecule(smiles='CCCCC'), (200, 'kJ/mol'), 'test', (190, 'kJ/mol'))
+        cls.pentene = ErrorCancelingSpecies(Molecule(smiles='C=CCCC'), (225, 'kJ/mol'), 'test', (220, 'kJ/mol'))
+        cls.hexane = ErrorCancelingSpecies(Molecule(smiles='CCCCCC'), (250, 'kJ/mol'), 'test', (260, 'kJ/mol'))
+        cls.hexene = ErrorCancelingSpecies(Molecule(smiles='C=CCCCC'), (275, 'kJ/mol'), 'test', (275, 'kJ/mol'))
+        cls.benzene = ErrorCancelingSpecies(Molecule(smiles='c1ccccc1'), (-50, 'kJ/mol'), 'test', (-80, 'kJ/mol'))
+        cls.caffeine = ErrorCancelingSpecies(Molecule(smiles='CN1C=NC2=C1C(=O)N(C(=O)N2C)C'), (300, 'kJ/mol'), 'test')
+        cls.ethyne = ErrorCancelingSpecies(Molecule(smiles='C#C'), (200, 'kJ/mol'), 'test')
 
     def test_creating_error_canceling_schemes(self):
         scheme = ErrorCancelingScheme(self.propene, [self.butane, self.benzene, self.caffeine, self.ethyne], True, True)

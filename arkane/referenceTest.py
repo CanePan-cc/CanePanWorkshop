@@ -52,12 +52,13 @@ class TestReferenceSpecies(unittest.TestCase):
     A class for testing that the ReferenceSpecies class functions properly
     """
 
-    def setUp(self):
-        self.methane = Species(smiles='C')
-        self.ethane = Species(smiles='CC')
-        self.propane = Species(smiles='CCC')
+    @classmethod
+    def setUpClass(cls):
+        cls.methane = Species(smiles='C')
+        cls.ethane = Species(smiles='CC')
+        cls.propane = Species(smiles='CCC')
 
-        self.thermo_data = ThermoData(H298=(100.0, 'kJ/mol'), S298=(100.0, 'J/(mol*K)'))
+        cls.thermo_data = ThermoData(H298=(100.0, 'kJ/mol'), S298=(100.0, 'J/(mol*K)'))
 
     def test_instantiate_reference_species(self):
         """
@@ -143,9 +144,10 @@ class TestReferenceDatabase(unittest.TestCase):
     Test that the ReferenceDatabase class functions properly
     """
 
-    def setUp(self):
-        self.database = ReferenceDatabase()
-        self.database.load()
+    @classmethod
+    def setUpClass(cls):
+        cls.database = ReferenceDatabase()
+        cls.database.load()
 
     def test_load_main_reference_set(self):
         """
