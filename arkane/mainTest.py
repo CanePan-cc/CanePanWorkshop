@@ -56,7 +56,7 @@ class TestArkaneExamples(unittest.TestCase):
         """A function that is run ONCE before all unit tests in this class."""
         cls.base_path = os.path.join(os.path.dirname(os.path.dirname(rmgpy.__file__)), 'examples', 'arkane')
         cls.failed = []
-        cls.example_types = ['species', 'reactions', 'explorer', 'networks']
+        cls.example_types = ['species', 'reactions', 'explorer', 'networks', 'bac']
 
     def test_arkane_examples(self):
         for example_type in self.example_types:
