@@ -67,6 +67,7 @@ requirements:
     - scikit-learn
     - scipy
     - symmetry
+    - xlrd
     - xlwt
 test:
   source_files:
