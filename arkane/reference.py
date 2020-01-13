@@ -224,7 +224,7 @@ class ReferenceSpecies(ArkaneSpecies):
             ValueError: If there is no reference data for this reference species
 
         Returns:
-            ScalarQuantity
+            NamedTuple of ScalarQuantity containing enthalpy and preferred source
         """
         if not self.reference_data:
             raise ValueError('No reference data is included for species {0}'.format(self))
@@ -233,24 +233,37 @@ class ReferenceSpecies(ArkaneSpecies):
         preferred_source = source
 
         if preferred_source is None:
-            # Find the preferred source
-            if self.preferred_reference is not None:
-                preferred_source = self.preferred_reference
-            else:  # Choose the source that has the smallest uncertainty
-                sources = list(self.reference_data.keys())
-                data = list(self.reference_data.values())
-                preferred_source = sources[0]  # If all else fails, use the first source as the preferred one
-                uncertainty = data[0].thermo_data.H298.uncertainty_si
-                for i, entry in enumerate(data):
-                    if (entry.thermo_data.H298.uncertainty_si > 0) and \
-                            (entry.thermo_data.H298.uncertainty_si < uncertainty):
-                        uncertainty = entry.thermo_data.H298.uncertainty_si
-                        preferred_source = sources[i]
+            preferred_source = self.get_preferred_source()
 
         return ReferenceEnthalpy(
             self.reference_data[preferred_source].thermo_data.H298,
             preferred_source
         )
+
+    def get_preferred_source(self):
+        """
+        Obtain the preferred reference data source for the species
+
+        Notes:
+            If the 'preferred_source` attribute is set, return it,
+            otherwise use the source with the lowest non-zero uncertainty.
+
+        Returns:
+            String with the preferred source
+        """
+        if self.preferred_reference is not None:
+            preferred_source = self.preferred_reference
+        else:  # Choose the source that has the smallest uncertainty
+            sources = list(self.reference_data.keys())
+            data = list(self.reference_data.values())
+            preferred_source = sources[0]  # If all else fails, use the first source as the preferred one
+            uncertainty = data[0].thermo_data.H298.uncertainty_si
+            for i, entry in enumerate(data):
+                if 0 < entry.thermo_data.H298.uncertainty_si < uncertainty:
+                    uncertainty = entry.thermo_data.H298.uncertainty_si
+                    preferred_source = sources[i]
+
+        return preferred_source
 
     def get_default_xyz(self):
         """
