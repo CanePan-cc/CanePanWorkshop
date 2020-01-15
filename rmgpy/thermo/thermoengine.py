@@ -33,6 +33,7 @@ import math
 import numpy as np
 
 import rmgpy.constants as constants
+from rmgpy.exceptions import AtomTypeError
 from rmgpy.data.rmg import get_db
 from rmgpy.statmech import Conformer
 from rmgpy.thermo import Wilhoit, NASA, ThermoData
@@ -60,14 +61,22 @@ def process_thermo_data(spc, thermo0, thermo_class=NASA, solvent_name=''):
         logging.debug('Solvent database or solvent_name not found. Solvent effect was not utilized')
         solvent_data = None
     else:
-        solvent_data = solvation_database.get_solvent_data(solvent_name)
+        try:
+            solvent_data = solvation_database.get_solvent_data(solvent_name)
+        except Exception as e:
+            logging.warning(f'Could not determining solvent thermo corrections for {spc.label}. Got:\n{e}')
+            solvent_data = None
     if solvent_data and not "Liquid thermo library" in thermo0.comment:
         solvation_database = get_db('solvation')
-        solute_data = solvation_database.get_solute_data(spc)
-        solvation_correction = solvation_database.get_solvation_correction(solute_data, solvent_data)
-        # correction is added to the entropy and enthalpy
-        wilhoit.S0.value_si = (wilhoit.S0.value_si + solvation_correction.entropy)
-        wilhoit.H0.value_si = (wilhoit.H0.value_si + solvation_correction.enthalpy)
+        try:
+            solute_data = solvation_database.get_solute_data(spc)
+        except Exception as e:
+            logging.warning(f'Could not determining solvent thermo corrections for {spc.label}. Got:\n{e}')
+        else:
+            solvation_correction = solvation_database.get_solvation_correction(solute_data, solvent_data)
+            # correction is added to the entropy and enthalpy
+            wilhoit.S0.value_si = (wilhoit.S0.value_si + solvation_correction.entropy)
+            wilhoit.H0.value_si = (wilhoit.H0.value_si + solvation_correction.enthalpy)
 
     # Compute E0 by extrapolation to 0 K
     if spc.conformer is None:
