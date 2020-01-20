@@ -105,6 +105,7 @@ from rmgpy.rmg.main import initialize_log as initialize_rmg_log
 from rmgpy.rmg.main import RMG
 from rmgpy.rmg.pdep import PDepReaction
 from rmgpy.solver.simple import SimpleReactor
+from rmgpy.solver.liquid import LiquidReactor
 from rmgpy.species import Species
 from rmgpy.thermo import NASAPolynomial, NASA, ThermoData, Wilhoit
 from rmgpy.tools.loader import load_rmg_py_job
@@ -404,6 +405,21 @@ def run_sa(method, observable_list, run_directory, input_file, threshold=0.001, 
                 else:
                     pressure = reaction_system.P.value_si
                 reaction_system.sens_conditions['P'] = pressure
+            elif isinstance(reaction_system, LiquidReactor):
+                reaction_system.sensitive_species = rmg_observable_species
+                reaction_system.sensitivity_threshold = threshold
+                if hasattr(reaction_system, 'Trange') and reaction_system.Trange is not None:
+                    temperature = sum([t.value_si for t in reaction_system.Trange]) / len(reaction_system.Trange)
+                else:
+                    temperature = reaction_system.T.value_si
+                reaction_system.sens_conditions['T'] = temperature
+                if hasattr(reaction_system, 'Vrange') and reaction_system.Vrange is not None:
+                    volume = sum([v for v in reaction_system.Vrange]) / len(reaction_system.Vrange)
+                else:
+                    volume = reaction_system.V
+                reaction_system.sens_conditions['V'] = volume
+            else:
+                raise NotImplementedError(f'RMG SA not implemented for Reactor type {type(reaction_system)}.')
         simulate(rmg)
     else:
         raise NotImplementedError('Currently only RMG is implemented as an SA method')  # temp
@@ -532,8 +548,11 @@ def parse_arc_input_file(input_file_path, has_sa, has_pdep):
         raise TypeError(f'The SA species argument must be an integer, got {arguments["SA species"]} '
                         f'which is a {type(arguments["SA species"])}')
     if not isinstance(arguments['SA pdep threshold'], float):
-        raise TypeError(f'The SA pdep threshold argument must be a float, got {arguments["SA pdep threshold"]} '
-                        f'which is a {type(arguments["SA pdep threshold"])}')
+        if isinstance(arguments['SA pdep threshold'], int) and 0 <= arguments['SA pdep threshold'] <= 1:
+            arguments['SA pdep threshold'] = float(arguments['SA pdep threshold'])
+        else:
+            raise TypeError(f'The SA pdep threshold argument must be a float, got {arguments["SA pdep threshold"]} '
+                            f'which is a {type(arguments["SA pdep threshold"])}')
     if arguments['SA pdep threshold'] > 1 or arguments['SA pdep threshold'] < 0:
         raise ValueError(f'The SA pdep threshold argument cannot be negative or greater than one. '
                          f'Got {arguments["SA pdep threshold"]}')
