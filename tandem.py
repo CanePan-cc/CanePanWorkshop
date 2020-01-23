@@ -183,12 +183,20 @@ def main(args, kwargs):
             run_rmg(input_file=rmg_input_file, output_directory=run_directory, kwargs=kwargs, arguments=arguments,
                     tolerance=tolerance, thermo_library=thermo_library)
 
-        run_sa(method=arguments['SA method'],
-               observable_list=arguments['SA observables'],
-               input_file=rmg_input_file,
-               run_directory=run_directory,
-               threshold=arguments['SA threshold']
-               )
+        sa_success = run_sa(method=arguments['SA method'],
+                            observable_list=arguments['SA observables'],
+                            input_file=rmg_input_file,
+                            run_directory=run_directory,
+                            threshold=arguments['SA threshold'],
+                            )
+        if not sa_success:
+            log(f'Could not complete the sensitivity analysis using {arguments["SA method"]}', 'error')
+            if len(tolerances) > i + 1:
+                # the next iteration will utilize a tighter tolerance
+                continue
+            elif i + 1 < max_iterations:
+                log(f'Decreasing lowest tolerance to {0.5 * tolerances[-1]} and trying again')
+                tolerances = tolerances + [0.5 * tolerances[-1]] * (max_iterations - len(tolerances))
 
         species_dict_in_iteration, additional_calcs_required, executed_networks = determine_species_to_calculate(
             run_directory=run_directory,
@@ -349,6 +357,9 @@ def run_sa(method, observable_list, run_directory, input_file, threshold=0.001, 
         threshold (float, optional): The sensitivity threshold to use.
         verbose (bool, optional): Whether or not to log.
 
+    Returns:
+        bool: Whether SA ran successfully. ``True`` if it did.
+
     Raises:
         InputError: If ``method`` has a wrong value.
     """
@@ -420,9 +431,13 @@ def run_sa(method, observable_list, run_directory, input_file, threshold=0.001, 
                 reaction_system.sens_conditions['V'] = volume
             else:
                 raise NotImplementedError(f'RMG SA not implemented for Reactor type {type(reaction_system)}.')
-        simulate(rmg)
+        try:
+            simulate(rmg)
+        except FileNotFoundError:
+            return False
     else:
         raise NotImplementedError('Currently only RMG is implemented as an SA method')  # temp
+    return True
 
 
 def restart_t3(path, thermo_library=None):
