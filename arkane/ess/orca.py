@@ -53,7 +53,7 @@ class OrcaLog(Log):
     """
 
     def __init__(self, path):
-        super(OrcaLog, self).__init__(path)
+        self.path = path
 
     def get_number_of_atoms(self):
         """
