@@ -150,10 +150,9 @@ def main(args, kwargs):
 
     with open(rmg_input_file, 'r') as f:
         content = f.read()
-        has_sa = 'sensitivity=[' in content
         has_pdep = 'pressureDependence(' in content
 
-    arguments, arc_input_dict = parse_arc_input_file(input_file_path=args.tandem, has_sa=has_sa, has_pdep=has_pdep)
+    arguments, arc_input_dict = parse_arc_input_file(input_file_path=args.tandem, has_pdep=has_pdep)
 
     log(f'\nUsing the following arguments:\n'
         f'{dict_to_str(arguments, level=1)}')
@@ -183,20 +182,21 @@ def main(args, kwargs):
             run_rmg(input_file=rmg_input_file, output_directory=run_directory, kwargs=kwargs, arguments=arguments,
                     tolerance=tolerance, thermo_library=thermo_library)
 
-        sa_success = run_sa(method=arguments['SA method'],
-                            observable_list=arguments['SA observables'],
-                            input_file=rmg_input_file,
-                            run_directory=run_directory,
-                            threshold=arguments['SA threshold'],
-                            )
-        if not sa_success:
-            log(f'Could not complete the sensitivity analysis using {arguments["SA method"]}', 'error')
-            if len(tolerances) > i + 1:
-                # the next iteration will utilize a tighter tolerance
-                continue
-            elif i + 1 < max_iterations:
-                log(f'Decreasing lowest tolerance to {0.5 * tolerances[-1]} and trying again')
-                tolerances = tolerances + [0.5 * tolerances[-1]] * (max_iterations - len(tolerances))
+        if not arguments['all core species']:
+            sa_success = run_sa(method=arguments['SA method'],
+                                observable_list=arguments['SA observables'],
+                                input_file=rmg_input_file,
+                                run_directory=run_directory,
+                                threshold=arguments['SA threshold'],
+                                )
+            if not sa_success:
+                log(f'Could not complete the sensitivity analysis using {arguments["SA method"]}', 'error')
+                if len(tolerances) > i + 1:
+                    # the next iteration will utilize a tighter tolerance
+                    continue
+                elif i + 1 < max_iterations:
+                    log(f'Decreasing lowest tolerance to {0.5 * tolerances[-1]} and trying again')
+                    tolerances = tolerances + [0.5 * tolerances[-1]] * (max_iterations - len(tolerances))
 
         species_dict_in_iteration, additional_calcs_required, executed_networks = determine_species_to_calculate(
             run_directory=run_directory,
@@ -503,7 +503,7 @@ def restart_t3(path, thermo_library=None):
     return i_max, run_rmg_i, thermo_library
 
 
-def parse_arc_input_file(input_file_path, has_sa, has_pdep):
+def parse_arc_input_file(input_file_path, has_pdep):
     """
     Split the ARC input file into relevant arguments for The RMG-ARC Tandem Tool, and the legacy ARC input.
     This function also checks the ARC input file's validity.
@@ -515,7 +515,6 @@ def parse_arc_input_file(input_file_path, has_sa, has_pdep):
 
     Args:
         input_file_path (str, list): A path to ARC's input file.
-        has_sa (bool): Whether the RMG input file contains sensitivity analysis directives, ``True`` if it does.
         has_pdep (bool): Whether the RMG input file contains a P-dep block, ``True`` if it does.
 
     Returns:
@@ -534,8 +533,8 @@ def parse_arc_input_file(input_file_path, has_sa, has_pdep):
     arguments['SA observables'] = input_dict['SA observables'] if 'SA observables' in input_dict else list()
     arguments['SA method'] = input_dict['SA method'] if 'SA method' in input_dict else 'RMG'
     arguments['SA threshold'] = input_dict['SA threshold'] if 'SA threshold' in input_dict else 0.001
-    arguments['SA species'] = input_dict['SA species'] if 'SA species' in input_dict else 10 and has_sa
-    arguments['SA reactions'] = input_dict['SA reactions'] if 'SA reactions' in input_dict else 10 and has_sa
+    arguments['SA species'] = input_dict['SA species'] if 'SA species' in input_dict else 10
+    arguments['SA reactions'] = input_dict['SA reactions'] if 'SA reactions' in input_dict else 10
     arguments['SA pdep threshold'] = input_dict['SA pdep threshold'] \
         if 'SA pdep threshold' in input_dict else 0.01 if has_pdep else 1.0
     arguments['collision violators'] = input_dict['collision violators'] \
@@ -550,7 +549,8 @@ def parse_arc_input_file(input_file_path, has_sa, has_pdep):
         if 'max RMG walltime' in input_dict else '01:00:00:00'
 
     # check argument types:
-    if not isinstance(arguments['SA observables'], list):
+    if not isinstance(arguments['SA observables'], list) \
+            and not(arguments['SA observables'] is None and arguments['all core species'] is True):
         raise TypeError(f'The SA observables argument must be a list, got {arguments["SA observables"]} '
                         f'which is a {type(arguments["SA observables"])}')
     if not isinstance(arguments['SA method'], str):
@@ -878,9 +878,10 @@ def determine_species_to_calculate(run_directory, arguments, unconverged_species
             species_to_calc_coll = determine_species_based_on_collision_violators(
                 run_directory, rmg_species, unconverged_species)
 
-    species_to_calc = combine_dicts(species_to_calc_sa, species_to_calc_coll)
+        species_to_calc = combine_dicts(species_to_calc_sa, species_to_calc_coll)
 
-    additional_calcs_required = bool(len(species_to_calc.values()))
+    additional_calcs_required = bool(len(species_to_calc.values())) if species_to_calc is not None else False
+
     if verbose:
         log(f'Additional calculations required: {additional_calcs_required}\n')
     if additional_calcs_required:
@@ -1404,12 +1405,9 @@ def combine_dicts(dict1, dict2):
 
     Returns:
         dict: The combined dictionary
-
-    Raises:
-        InputError: If both dictionaries are None.
     """
     if dict1 is None and dict2 is None:
-        raise InputError('Both dicts cannot be None')
+        return None
     if dict1 is None:
         return dict2
     if dict2 is None:
