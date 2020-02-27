@@ -104,10 +104,17 @@ def catalyst_properties(bindingEnergies=None,
     Binding energies of C,H,O,N atoms, and the surface site density.
     Defaults to Pt(111) if not specified.
     """
-    rmg.binding_energies = convert_binding_energies(bindingEnergies)
+    metal_db = MetalDatabase()
+    metal_db.load(os.path.join(settings['database.directory'], 'surface'))
+
+    if bindingEnergies is None:
+        rmg.bindingEnergies = metal_db.get_binding_energies("Pt111")
+        logging.info("Using default binding energies for Pt(111):\n{0!r}".format(rmg.bindingEnergies))
+    else:
+        rmg.binding_energies = convert_binding_energies(bindingEnergies)
 
     if surfaceSiteDensity is None:
-        surfaceSiteDensity = (2.72e-9, 'mol/cm^2')
+        surfaceSiteDensity = metal_db.get_surface_site_density("Pt111")
         logging.info("Using default surface site density of {0!r}".format(surfaceSiteDensity))
     surfaceSiteDensity = SurfaceConcentration(*surfaceSiteDensity)
     rmg.surface_site_density = surfaceSiteDensity
@@ -115,18 +122,11 @@ def catalyst_properties(bindingEnergies=None,
 
 def convert_binding_energies(bindingEnergies):
     """
-    Process the bindingEnergies from the input file.
-    If "None" is passed, then it returns Pt(111) values.
+    Process bindingEnergies from the input file.
 
-    :param bindingEnergies: a dictionary of element symbol: binding energy pairs (or None)
+    :param bindingEnergies: a dictionary of element symbol: binding energy pairs
     :return: the processed and checked dictionary
     """
-    metal_db = MetalDatabase()
-    metal_db.load(os.path.join(settings['database.directory'], 'surface'))
-
-    if bindingEnergies is None:
-        bindingEnergies = metal_db.get_binding_energies("Pt111")
-        logging.info("Using default binding energies for Pt(111):\n{0!r}".format(bindingEnergies))
     if not isinstance(bindingEnergies, dict):
         raise InputError("bindingEnergies should be None (for default) or a dict.")
     new_dict = {}
