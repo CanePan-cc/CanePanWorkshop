@@ -45,6 +45,7 @@ from rmgpy.solver.mbSampled import MBSampledReactor
 from rmgpy.solver.simple import SimpleReactor
 from rmgpy.solver.surface import SurfaceReactor
 from rmgpy.util import as_list
+from rmgpy.data.surface import MetalDatabase
 
 ################################################################################
 
@@ -120,13 +121,11 @@ def convert_binding_energies(bindingEnergies):
     :param bindingEnergies: a dictionary of element symbol: binding energy pairs (or None)
     :return: the processed and checked dictionary
     """
+    metal_db = MetalDatabase()
+    metal_db.load(os.path.join(settings['database.directory'], 'surface'))
+
     if bindingEnergies is None:
-        bindingEnergies = {  # default values for Pt(111)
-            'C': (-6.750, 'eV/molecule'),
-            'H': (-2.479, 'eV/molecule'),
-            'O': (-3.586, 'eV/molecule'),
-            'N': (-4.352, 'eV/molecule'),
-        }
+        bindingEnergies = metal_db.get_binding_energies("Pt111")
         logging.info("Using default binding energies for Pt(111):\n{0!r}".format(bindingEnergies))
     if not isinstance(bindingEnergies, dict):
         raise InputError("bindingEnergies should be None (for default) or a dict.")
