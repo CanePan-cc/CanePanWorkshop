@@ -98,14 +98,27 @@ def database(
 
 
 def catalyst_properties(bindingEnergies=None,
-                        surfaceSiteDensity=None, ):
+                        surfaceSiteDensity=None,
+                        metal=None):
     """
     Specify the properties of the catalyst.
     Binding energies of C,H,O,N atoms, and the surface site density.
+    Metal is the label of a metal in the surface metal library.
     Defaults to Pt(111) if not specified.
     """
     metal_db = MetalDatabase()
     metal_db.load(os.path.join(settings['database.directory'], 'surface'))
+
+    if isinstance(metal, str):
+        try:
+            bindingEnergies = metal_db.get_binding_energies(metal)
+            rmg.bindingEnergies = bindingEnergies
+            logging.info("Using binding energies:\n{0!r}".format(rmg.bindingEnergies))
+            surfaceSiteDensity = metal_db.get_surface_site_density(metal)
+            logging.info("Using surface site density of {0!r}".format(surfaceSiteDensity))
+        except:
+            logging.error('Metal {} missing from surface library'.format(metal))
+            raise
 
     if bindingEnergies is None:
         rmg.bindingEnergies = metal_db.get_binding_energies("Pt111")
