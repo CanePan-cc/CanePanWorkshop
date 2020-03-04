@@ -48,6 +48,8 @@ from rmgpy.ml.estimator import MLEstimator
 from rmgpy.molecule import Molecule, Bond, Group
 from rmgpy.species import Species
 from rmgpy.thermo import NASAPolynomial, NASA, ThermoData, Wilhoit
+from rmgpy.data.surface import MetalDatabase
+from rmgpy import settings
 
 #: This dictionary is used to add multiplicity to species label
 _multiplicity_labels = {1: 'S', 2: 'D', 3: 'T', 4: 'Q', 5: 'V'}
@@ -1369,12 +1371,10 @@ class ThermoDatabase(object):
         Returns:
             None, stores result in self.delta_atomic_adsorption_energy
         """
-        reference_binding_energies = {
-            'C': rmgpy.quantity.Energy(-6.750, 'eV/molecule'),
-            'H': rmgpy.quantity.Energy(-2.479, 'eV/molecule'),
-            'O': rmgpy.quantity.Energy(-3.586, 'eV/molecule'),
-            'N': rmgpy.quantity.Energy(-4.352, 'eV/molecule'),
-        }
+        metal_db = MetalDatabase()
+        metal_db.load(os.path.join(settings['database.directory'], 'surface'))
+
+        reference_binding_energies = metal_db.get_binding_energies("Pt111")
 
         # Use Pt(111) reference if no binding energies are provided
         if binding_energies is None:
