@@ -1374,7 +1374,10 @@ class ThermoDatabase(object):
         metal_db = MetalDatabase()
         metal_db.load(os.path.join(settings['database.directory'], 'surface'))
 
+        # Use Pt(111) as the point to scale from
         reference_binding_energies = metal_db.get_binding_energies("Pt111")
+        for element, energy in reference_binding_energies.items():
+            reference_binding_energies[element] = rmgpy.quantity.Energy(reference_binding_energies[element])
 
         # Use Pt(111) reference if no binding energies are provided
         if binding_energies is None:
