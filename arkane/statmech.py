@@ -54,7 +54,10 @@ from rmgpy.quantity import Quantity
 from arkane.common import ArkaneSpecies, symbol_by_number, get_principal_moments_of_inertia
 from arkane.encorr.corr import get_atom_correction, get_bac
 from arkane.ess import GaussianLog, Log, MolproLog, OrcaLog, QChemLog, TeraChemLog
+from arkane.isodesmic import ErrorCancelingSpecies, IsodesmicRingScheme
 from arkane.output import prettify
+from arkane.reference import ReferenceDatabase
+from arkane.thermo import ThermoJob
 from arkane.util import determine_qm_software
 
 ################################################################################
@@ -184,6 +187,10 @@ class StatMechJob(object):
         self.modelChemistry = ''
         self.frequencyScaleFactor = 1.0
         self.includeHinderedRotors = True
+        self.useIsodesmicReactions = False
+        self.isodesmicCorrection = None
+        self.isodesmicReactionList = None
+        self.referenceSets = None
         self.applyAtomEnergyCorrections = True
         self.applyBondEnergyCorrections = True
         self.bondEnergyCorrectionType = 'p'
@@ -482,13 +489,30 @@ class StatMechJob(object):
                 e_electronic = energy_log.load_energy(zpe_scale_factor)  # in J/mol
             else:
                 e_electronic *= constants.E_h * constants.Na  # convert Hartree/particle into J/mol
+
+            isodesmic_correction = 0  # This will allow us to calculate the needed correction later
+            if self.useIsodesmicReactions:  # Make sure atom and bond corrections are not applied
+                if self.applyAtomEnergyCorrections:
+                    logging.warning('Atom corrections requested but will not be used since isodesmic reactions are '
+                                    'being used')
+                    self.applyAtomEnergyCorrections = False
+                if self.applyBondEnergyCorrections:
+                    logging.warning('Bond corrections requested but will not be used since isodesmic reactions are '
+                                    'being used')
+                    self.applyBondEnergyCorrections = False
+
+                if self.isodesmicCorrection is not None:
+                    isodesmic_correction = self.isodesmicCorrection
+
             if self.applyAtomEnergyCorrections:
                 atom_corrections = get_atom_correction(self.modelChemistry,
                                                        atoms, self.atomEnergies)
 
             else:
                 atom_corrections = 0
-                logging.warning('Atom corrections are not being used. Do not trust energies and thermo.')
+                if not self.useIsodesmicReactions:
+                    logging.warning('Atom corrections are not being used. Do not trust energies and thermo.')
+
             if self.applyBondEnergyCorrections:
                 if not self.bonds and hasattr(self.species, 'molecule') and self.species.molecule:
                     self.bonds = self.species.molecule[0].enumerate_bonds()
@@ -497,7 +521,7 @@ class StatMechJob(object):
                                            multiplicity=conformer.spin_multiplicity)
             else:
                 bond_corrections = 0
-            e_electronic_with_corrections = e_electronic + atom_corrections + bond_corrections
+            e_electronic_with_corrections = e_electronic + atom_corrections + bond_corrections + isodesmic_correction
             # Get ZPE only for polyatomic species (monoatomic species don't have frequencies, so ZPE = 0)
             zpe = statmech_log.load_zero_point_energy() * zpe_scale_factor if len(number) > 1 else 0
             logging.debug('Scaled zero point energy (ZPE) is {0} J/mol'.format(zpe))
@@ -700,6 +724,35 @@ class StatMechJob(object):
         self.supporting_info.append(d1d)
         # save conformer
         self.species.conformer = conformer
+
+        if self.useIsodesmicReactions and (self.isodesmicCorrection is None):
+            # First, check that a species structure has been given
+            if not self.species.molecule:
+                raise InputError('A structure must be defined in the species block of the input file to perform '
+                                 'isodesmic reaction calculations. For example, append the following to the species '
+                                 'block: `structure=SMILES(CC)` using ethane as an example here.')
+
+            # Next, load the reference set database
+            reference_db = ReferenceDatabase()
+            reference_db.load(paths=self.referenceSets)
+
+            uncorrected_thermo_job = ThermoJob(species=self.species, thermo_class='nasa')
+            uncorrected_thermo_job.generate_thermo()
+
+            uncorrected_thermo = self.species.thermo.get_enthalpy(298)
+
+            # Set the species thermo to None so that it re-generates the second time through
+            self.species.thermo = None
+
+            scheme = IsodesmicRingScheme(target=ErrorCancelingSpecies(self.species.molecule[0],
+                                                                      (uncorrected_thermo, 'J/mol'),
+                                                                      self.modelChemistry),
+                                         reference_set=reference_db.extract_model_chemistry(self.modelChemistry))
+            isodesmic_thermo, self.isodesmicReactionList = scheme.calculate_target_enthalpy()
+
+            # Set the difference as the isodesmic EO correction and re-run the statmech job
+            self.isodesmicCorrection = isodesmic_thermo.value_si - uncorrected_thermo
+            self.load(pdep)
 
     def write_output(self, output_directory):
         """
