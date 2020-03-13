@@ -42,10 +42,19 @@ corannulene and C60 by means of inexpensive theoretical procedures. Journal of P
 https://doi.org/10.1021/jp404158v
 """
 
+import signal
+
+from lpsolve55 import lpsolve, EQ, LE
 import numpy as np
 
 from rmgpy.molecule import Molecule
 from rmgpy.quantity import ScalarQuantity
+
+# Optional Imports
+try:
+    import pyomo.environ as pyo
+except ImportError:
+    pyo = None
 
 
 class ErrorCancelingSpecies:
@@ -265,6 +274,120 @@ class ErrorCancelingScheme:
 
         self.target_constraint, self.constraint_matrix = self.constraints.calculate_constraints()
         self.reference_species = self.constraints.reference_species
+
+    def _find_error_canceling_reaction(self, reference_subset, milp_software='lpsolve'):
+        """
+        Automatically find a valid error canceling reaction given a subset of the available benchmark species. This
+        is done by solving a mixed integer linear programming (MILP) problem similiar to
+        Buerger et al. (https://doi.org/10.1016/j.combustflame.2017.08.013)
+
+        Args:
+            reference_subset (list): A list of indices from self.reference_species that can participate in the reaction
+            milp_software (str, optional): 'lpsolve' (default) or 'pyomo'. lpsolve is usually faster.
+
+        Returns:
+            ErrorCancelingReaction: reaction with the target species (if a valid reaction is found, else `None`)
+            np.ndarray: indices (of the subset) for the species that participated in the return reaction
+        """
+        # Define the constraints based on the provided subset
+        c_matrix = np.take(self.constraint_matrix, reference_subset, axis=0)
+        c_matrix = np.tile(c_matrix, (2, 1))
+        sum_constraints = np.sum(c_matrix, 1, dtype=int)
+        targets = -1*self.target_constraint
+        m = c_matrix.shape[0]
+        n = c_matrix.shape[1]
+        split = int(m/2)
+        solution = None
+
+        if milp_software == 'pyomo':
+            # Check that pyomo is available
+            if pyo is None:
+                raise ImportError('Cannot import optional package pyomo. Either install this dependency with '
+                                  '`conda install -c conda-forge pyomo glpk` or set milp_software to `lpsolve`')
+
+            # Setup the MILP problem using pyomo
+            lp_model = pyo.ConcreteModel()
+            lp_model.i = pyo.RangeSet(0, m - 1)
+            lp_model.j = pyo.RangeSet(0, n - 1)
+            lp_model.r = pyo.RangeSet(0, split-1)  # indices before the split correspond to reactants
+            lp_model.p = pyo.RangeSet(split, m - 1)  # indices after the split correspond to products
+            lp_model.v = pyo.Var(lp_model.i, domain=pyo.NonNegativeIntegers)  # The stoich. coef. we are solving for
+            lp_model.c = pyo.Param(lp_model.i, lp_model.j, initialize=lambda _, i_ind, j_ind: c_matrix[i_ind, j_ind])
+            lp_model.s = pyo.Param(lp_model.i, initialize=lambda _, i_ind: sum_constraints[i_ind])
+            lp_model.t = pyo.Param(lp_model.j, initialize=lambda _, j_ind: targets[j_ind])
+
+            def obj_expression(model):
+                return pyo.summation(model.v, model.s, index=model.i)
+
+            lp_model.obj = pyo.Objective(rule=obj_expression)
+
+            def constraint_rule(model, col):
+                return sum(model.v[row] * model.c[row, col] for row in model.r) - \
+                       sum(model.v[row] * model.c[row, col] for row in model.p) == model.t[col]
+
+            lp_model.constraints = pyo.Constraint(lp_model.j, rule=constraint_rule)
+
+            # Solve the MILP problem using the GLPK MILP solver (https://www.gnu.org/software/glpk/)
+            opt = pyo.SolverFactory('glpk')
+            results = opt.solve(lp_model)
+
+            # Return None if a valid reaction is not found
+            if results.solver.status != pyo.SolverStatus.ok:
+                return None, None
+
+            # Extract the solution and find the species with non-zero stoichiometric coefficients
+            solution = lp_model.v.extract_values().values()
+
+        elif milp_software == 'lpsolve':
+            # Save the current signal handler
+            sig = signal.getsignal(signal.SIGINT)
+
+            # Setup the MILP problem using lpsolve
+            lp = lpsolve('make_lp', 0, m)
+            lpsolve('set_verbose', lp, 2)  # Reduce the logging from lpsolve
+            lpsolve('set_obj_fn', lp, sum_constraints)
+            lpsolve('set_minim', lp)
+
+            for j in range(n):
+                lpsolve('add_constraint', lp, np.concatenate((c_matrix[:split, j], -1*c_matrix[split:, j])), EQ,
+                        targets[j])
+
+            lpsolve('add_constraint', lp, np.ones(m), LE, 20)  # Use at most 20 species (including replicates)
+            lpsolve('set_timeout', lp, 1)  # Move on if lpsolve can't find a solution quickly
+
+            # Constrain v_i to be 4 or less
+            for i in range(m):
+                lpsolve('set_upbo', lp, i, 4)
+
+            # All v_i must be integers
+            lpsolve('set_int', lp, [True]*m)
+
+            status = lpsolve('solve', lp)
+
+            # Reset signal handling since lpsolve changed it
+            try:
+                signal.signal(signal.SIGINT, sig)
+            except ValueError:
+                # This is not being run in the main thread, so we cannot reset signal
+                pass
+
+            if status != 0:
+                return None, None
+
+            else:
+                _, solution = lpsolve('get_solution', lp)[:2]
+
+        reaction = ErrorCancelingReaction(self.target, dict())
+        subset_indices = []
+        for index, v in enumerate(solution):
+            if v > 0:
+                subset_indices.append(index % split)
+                if index < split:
+                    reaction.species.update({self.reference_species[reference_subset[index]]: -v})
+                else:
+                    reaction.species.update({self.reference_species[reference_subset[index % split]]: v})
+
+        return reaction, np.array(subset_indices)
 
 
 class IsodesmicScheme(ErrorCancelingScheme):
