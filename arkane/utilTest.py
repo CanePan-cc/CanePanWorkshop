@@ -35,9 +35,10 @@ import os
 import unittest
 
 from rmgpy.exceptions import InputError
+from rmgpy.quantity import ScalarQuantity, ArrayQuantity
 
 from arkane.ess import GaussianLog, MolproLog, QChemLog, TeraChemLog
-from arkane.util import determine_qm_software
+from arkane.util import determine_qm_software, read_supporting_information
 
 ################################################################################
 
@@ -82,6 +83,18 @@ class TestThermo(unittest.TestCase):
 
         with self.assertRaises(InputError):
             determine_qm_software(non_ess_log_path)
+
+    def test_read_supporting_information(self):
+        """Test that we can read in the supporting information file"""
+        path = os.path.join(self.data_path, 'species', 'supporting_information.csv')
+        supporting_info = read_supporting_information(path)
+
+        self.assertEqual(supporting_info['Label'], 'C2H6')
+        self.assertEqual(supporting_info['Symmetry Number'], 6)
+        self.assertIsInstance(supporting_info['Rotational constant (cm-1)'], ArrayQuantity)
+        self.assertIsInstance(supporting_info['Electronic energy (J/mol)'], ScalarQuantity)
+        self.assertAlmostEqual(supporting_info['T1 diagnostic'], 0.101)
+        self.assertEqual(supporting_info['D1 diagnostic'], '')
 
 ################################################################################
 

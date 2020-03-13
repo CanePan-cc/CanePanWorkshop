@@ -31,9 +31,13 @@
 This module contains different utilities used in Arkane.
 """
 
+import csv
 import os
 
+import numpy as np
+
 from rmgpy.exceptions import InputError
+from rmgpy.quantity import ScalarQuantity, ArrayQuantity
 
 from arkane.ess import GaussianLog, MolproLog, OrcaLog, QChemLog, TeraChemLog
 
@@ -73,3 +77,46 @@ def determine_qm_software(fullpath):
             raise InputError(f'The file at {fullpath} could not be identified as a '
                              'Gaussian, Molpro, QChem, or TeraChem log file.')
     return software_log
+
+
+def read_supporting_information(path):
+    """
+    Read in the data stored in the supporting information file
+
+    Args:
+        path (str): Path to 'supporting_information.csv' for the species
+
+    Returns:
+        dict: Fields as keys, data as values
+    """
+    with open(path, 'r') as f:
+        reader = csv.reader(f)
+        fields = next(reader)
+        data = next(reader)
+
+    supporting_info = {key: value for key, value in zip(fields, data)}
+
+    # Convert types
+    for field, value in supporting_info.items():
+        if value:  # Do not convert empty string
+            # int
+            if field in ['Symmetry Number', 'Number of optical isomers']:
+                try:
+                    supporting_info[field] = int(value)
+                except ValueError:
+                    supporting_info[field] = float(value)
+            # float
+            elif field in ['T1 diagnostic', 'D1 diagnostic']:
+                supporting_info[field] = float(value)
+
+            # ScalarQuantity
+            elif field in ['Electronic energy (J/mol)', 'E0 (electronic energy + ZPE, J/mol)',
+                           'E0 with atom and bond corrections (J/mol)']:
+                supporting_info[field] = ScalarQuantity(float(value), 'J/mol')
+
+            # ArrayQuantity
+            elif field in ['Rotational constant (cm-1)',
+                           'Calculated Frequencies (unscaled and prior to projection, cm^-1)']:
+                supporting_info[field] = ArrayQuantity(np.array([float(x) for x in value.split(',')]), 'cm^-1')
+
+    return supporting_info
