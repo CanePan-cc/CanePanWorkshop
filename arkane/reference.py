@@ -39,6 +39,7 @@ import yaml
 
 from arkane.common import ArkaneSpecies, ARKANE_CLASS_DICT
 
+from rmgpy.quantity import ArrayQuantity, ScalarQuantity
 from rmgpy.rmgobject import RMGObject
 from rmgpy.species import Species
 from rmgpy.thermo import ThermoData
@@ -205,6 +206,81 @@ class ReferenceDataEntry(RMGObject):
                 raise ValueError('thermo_data for a ReferenceDataEntry object must be an rmgpy ThermoData instance')
         else:
             self._thermo_data = None
+
+
+class CalculatedDataEntry(RMGObject):
+    """
+    A class for storing a single entry of statistical mechanical and thermochemistry information calculated at a single
+    model chemistry or level of theory
+    """
+    def __init__(self, thermo_data, xyz_dict=None, unscaled_freqs=None, electronic_energy=None, t1_diagnostic=None,
+                 fod=None):
+        """
+
+        Args:
+            thermo_data (rmgpy.thermo.ThermoData): Actual thermochemistry values calculated using statistical mechanics
+                at select points. Arkane fits a heat capacity model to this data
+            xyz_dict (dict): An ARC style xyz dictionary for the cartesian coordinates
+            unscaled_freqs (np.array): Unscaled harmonic frequencies
+            electronic_energy (ScalarQuantity): The electronic single point energy
+            t1_diagnostic (float): T1 diagnostic for coupled cluster calculations to check if single reference methods
+                are suitable
+            fod (float): Fractional Occupation number weighted electron Density
+        """
+        super().__init__()
+        self.thermo_data = thermo_data
+        self.xyz_dict = xyz_dict
+        self.unscaled_freqs = unscaled_freqs
+        self.electronic_energy = electronic_energy
+        self.t1_diagnostic = t1_diagnostic
+        self.fod = fod
+
+    def __repr__(self):
+        return str(self.as_dict())
+
+    @property
+    def thermo_data(self):
+        return self._thermo_data
+
+    @thermo_data.setter
+    def thermo_data(self, value):
+        if value is not None:
+            if isinstance(value, ThermoData):
+                self._thermo_data = value
+            else:
+                raise ValueError('thermo_data for a CalculatedDataEntry object must be an rmgpy ThermoData object')
+        else:
+            self._thermo_data = None
+
+    @property
+    def electronic_energy(self):
+        return self._electronic_energy
+
+    @electronic_energy.setter
+    def electronic_energy(self, value):
+        if value:  # Allow empty string, which is a possibility when reading an Arkane supporting info file
+            if isinstance(value, ScalarQuantity):
+                self._electronic_energy = value
+            else:
+                raise ValueError('electronic_energy for a CalculatedDataEntry object must be an rmgpy ScalarQuantity '
+                                 'object')
+        else:
+            self._electronic_energy = None
+
+    @property
+    def unscaled_freqs(self):
+        return self._unscaled_freqs
+
+    @unscaled_freqs.setter
+    def unscaled_freqs(self, value):
+        if value:  # Allow empty string, which is a possibility when reading an Arkane supporting info file
+            if isinstance(value, ArrayQuantity):
+                self._unscaled_freqs = value
+            else:
+                raise ValueError('unscaled_freqs for a CalculatedDataEntry object must be an rmgpy ArrayQuantity '
+                                 'object')
+        else:
+            self._unscaled_freqs = None
 
 
 def _is_valid_reference_data(data_dictionary):

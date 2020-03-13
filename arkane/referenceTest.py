@@ -35,7 +35,8 @@ This script contains unit tests of the :mod:`arkane.reference` module.
 import os
 import unittest
 
-from arkane.reference import ReferenceSpecies, ReferenceDataEntry
+from arkane.reference import ReferenceSpecies, ReferenceDataEntry, CalculatedDataEntry
+from rmgpy.quantity import ArrayQuantity, ScalarQuantity
 from rmgpy.species import Species
 from rmgpy.thermo import ThermoData
 
@@ -56,6 +57,10 @@ class TestReferenceSpecies(unittest.TestCase):
         cls.propane = Species(smiles='CCC')
 
         cls.thermo_data = ThermoData(H298=(100.0, 'kJ/mol'), S298=(100.0, 'J/(mol*K)'))
+        cls.xyz_dict = {'symbols': ('H', 'H'), 'isotopes': (1, 1), 'coords': ((0.0, 0.0, 0.0), (0.708, 0.0, 0.0))}
+        cls.unscaled_freqs = ArrayQuantity([3000.0], 'cm^-1')
+        cls.electronic_energy = ScalarQuantity(10.0, 'J/mol')
+        cls.t1_diagnostic = 0.101
 
     def test_instantiate_reference_species(self):
         """
@@ -81,6 +86,17 @@ class TestReferenceSpecies(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             ReferenceSpecies()
+
+    def load_ref_from_yaml(self):
+        """
+        Test that the example ReferenceSpecies YAML file can be loaded
+        """
+        ref_spcs = ReferenceSpecies.__new__(ReferenceSpecies)
+        ref_spcs.load_yaml(os.path.join(FILE_DIR, 'data', 'species', 'reference_species_example.yml'))
+
+        self.assertEqual(ref_spcs.smiles, 'C#C[CH2]')
+        self.assertEqual(ref_spcs.label, 'example_reference_species')
+        self.assertIsInstance(ref_spcs.calculated_data, CalculatedDataEntry)
 
     def test_save_ref_to_yaml(self):
         """
@@ -110,6 +126,21 @@ class TestReferenceSpecies(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             ReferenceDataEntry({'H298': (100.0, 'kJ/mol')})
+
+    def test_calculated_data_entry(self):
+        """
+        Test that the CalculatedDataEntry class functions properly and enforces the standard for storing data
+        """
+        data_entry = CalculatedDataEntry(self.thermo_data, xyz_dict=self.xyz_dict, unscaled_freqs=self.unscaled_freqs,
+                                         electronic_energy=self.electronic_energy, t1_diagnostic=self.t1_diagnostic)
+        self.assertEqual(data_entry.thermo_data.H298.value_si, 100000.0)
+        self.assertIsInstance(data_entry.xyz_dict, dict)
+        self.assertIsInstance(data_entry.unscaled_freqs, ArrayQuantity)
+        self.assertAlmostEqual(data_entry.electronic_energy.value, 10.0)
+
+        data_entry_minimal = CalculatedDataEntry(self.thermo_data)
+        self.assertIsInstance(data_entry_minimal.thermo_data, ThermoData)
+
 
 
 if __name__ == '__main__':
