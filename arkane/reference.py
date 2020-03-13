@@ -38,10 +38,11 @@ import os
 import string
 from collections import namedtuple
 
-from arkane.common import ArkaneSpecies, ARKANE_CLASS_DICT
 import yaml
 
+from arkane.common import ArkaneSpecies, ARKANE_CLASS_DICT, symbol_by_number
 from arkane.isodesmic import ErrorCancelingSpecies
+from arkane.util import read_supporting_information
 from rmgpy import settings
 from rmgpy.molecule import Molecule
 from rmgpy.quantity import ArrayQuantity, ScalarQuantity
@@ -182,6 +183,43 @@ class ReferenceSpecies(ArkaneSpecies):
         class_dict['CalculatedDataEntry'] = CalculatedDataEntry
 
         self.make_object(data, class_dict)
+
+    def update_from_arkane_spcs(self, arkane_species, supporting_info_path=None):
+        """
+        Add in calculated data from an existing ArkaneSpecies object.
+
+        Notes:
+            If the model chemistry already exists then this calculated data will be overwritten by the data contained
+            in arkane_species
+
+        Args:
+            arkane_species (ArkaneSpecies):  Matching Arkane species that was run at the desired model chemistry
+            supporting_info_path (str): Path to 'supporting_information.csv' for the species, which is used to read in
+                the unscaled frequencies, electronic energy, and T1 diagnostic if they exist
+        """
+        thermo_data = arkane_species.thermo_data
+        # Only store H298 and S298 data
+        thermo_data.Cpdata = None
+        thermo_data.Tdata = None
+
+        conformer = arkane_species.conformer
+        symbols = [symbol_by_number[n] for n in conformer.number.value]
+        isotopes = [int(round(m)) for m in conformer.mass.value]
+        coords = conformer.coordinates.value
+        xyz_dict = {'symbols': symbols, 'isotopes': isotopes, 'coords': coords}
+
+        unscaled_freqs = None
+        electronic_energy = None
+        t1_diagnostic = None
+        if supporting_info_path:
+            supporting_info = read_supporting_information(supporting_info_path)
+            unscaled_freqs = supporting_info['Calculated Frequencies (unscaled and prior to projection, cm^-1)']
+            electronic_energy = supporting_info['Electronic energy (J/mol)']
+            t1_diagnostic = supporting_info['T1 diagnostic']
+
+        calc_data = CalculatedDataEntry(thermo_data=thermo_data, xyz_dict=xyz_dict, unscaled_freqs=unscaled_freqs,
+                                        electronic_energy=electronic_energy, t1_diagnostic=t1_diagnostic)
+        self.calculated_data[arkane_species.level_of_theory] = calc_data
 
     def to_error_canceling_spcs(self, model_chemistry, source=None):
         """
