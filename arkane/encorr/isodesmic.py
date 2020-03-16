@@ -65,11 +65,11 @@ class ErrorCancelingSpecies:
         """
 
         Args:
-            molecule (rmgpy.molecule.Molecule): molecule object to represent the species
+            molecule (Molecule): The RMG Molecule object with connectivity information
             low_level_hf298 (ScalarQuantity): evaluated using a lower level of theory (e.g. DFT)
             model_chemistry (str): Level of theory used to calculate the low level thermo
-            high_level_hf298 (ScalarQuantity, optional): evaluated using a high level of theory
-                (e.g. expt. data) that is serving as the "reference" for the isodesmic calculation
+            high_level_hf298 (ScalarQuantity, optional): evaluated using experimental data
+                or a high level of theory that is serving as the "reference" for the isodesmic calculation
             source (str): Literature source from which the high level data was taken
         """
         if isinstance(molecule, Molecule):
@@ -85,12 +85,20 @@ class ErrorCancelingSpecies:
                              f'consistency checks. Instead, a {type(model_chemistry)} object was given')
 
         if not isinstance(low_level_hf298, ScalarQuantity):
-            low_level_hf298 = ScalarQuantity(*low_level_hf298)
+            if isinstance(low_level_hf298, tuple):
+                low_level_hf298 = ScalarQuantity(*low_level_hf298)
+            else:
+                raise TypeError(f'Low level Hf298 should be a ScalarQuantity object or its tuple representation, but '
+                                f'received {low_level_hf298} instead.')
         self.low_level_hf298 = low_level_hf298
 
         # If the species is a reference species, then the high level data is already known
-        if high_level_hf298 and not isinstance(high_level_hf298, ScalarQuantity):
-            high_level_hf298 = ScalarQuantity(*high_level_hf298)
+        if high_level_hf298 is not None and not isinstance(high_level_hf298, ScalarQuantity):
+            if isinstance(high_level_hf298, tuple):
+                high_level_hf298 = ScalarQuantity(*high_level_hf298)
+            else:
+                raise TypeError(f'High level Hf298 should be a ScalarQuantity object or its tuple representation, but '
+                                f'received {high_level_hf298} instead.')
         self.high_level_hf298 = high_level_hf298
         self.source = source
 
@@ -129,15 +137,15 @@ class ErrorCancelingReaction:
         self.species = species
 
     def __repr__(self):
-        reactant_string = f'1.0*{self.target.molecule.to_smiles()} + '
+        reactant_string = f'1*{self.target.molecule.to_smiles()}'
         product_string = ''
         for spcs, coeff in self.species.items():
             if coeff > 0:
-                product_string += f'{coeff}*{spcs.molecule.to_smiles()} + '
+                product_string += f' + {int(coeff)}*{spcs.molecule.to_smiles()}'
             else:
-                reactant_string += f'{-1*coeff}*{spcs.molecule.to_smiles()} + '
+                reactant_string += f' + {-1*int(coeff)}*{spcs.molecule.to_smiles()}'
 
-        return f'<ErrorCancelingReaction {reactant_string[:-2]}== {product_string[:-2]}>'
+        return f'<ErrorCancelingReaction {reactant_string} <=> {product_string[3:]} >'
 
     def calculate_target_thermo(self):
         """

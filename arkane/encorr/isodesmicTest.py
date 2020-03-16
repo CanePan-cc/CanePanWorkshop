@@ -244,8 +244,8 @@ class TestErrorCancelingScheme(unittest.TestCase):
         self.assertEqual(len(reaction_list), 20)
         reaction_string = reaction_list.__repr__()
         # Consider both permutations of the products in the reaction string
-        rxn_str1 = '<ErrorCancelingReaction 1.0*C=CC + 1.0*CCCC == 1.0*CCC + 1.0*C=CCC >'
-        rxn_str2 = '<ErrorCancelingReaction 1.0*C=CC + 1.0*CCCC == 1.0*C=CCC + 1.0*CCC >'
+        rxn_str1 = '<ErrorCancelingReaction 1*C=CC + 1*CCCC <=> 1*CCC + 1*C=CCC >'
+        rxn_str2 = '<ErrorCancelingReaction 1*C=CC + 1*CCCC <=> 1*C=CCC + 1*CCC >'
         self.assertTrue(any(rxn_string in reaction_string for rxn_string in [rxn_str1, rxn_str2]))
 
         if self.pyo is not None:
