@@ -54,7 +54,7 @@ from rmgpy.quantity import Quantity
 from arkane.common import ArkaneSpecies, symbol_by_number, get_principal_moments_of_inertia
 from arkane.encorr.corr import get_atom_correction, get_bac
 from arkane.ess import GaussianLog, Log, MolproLog, OrcaLog, QChemLog, TeraChemLog
-from arkane.isodesmic import ErrorCancelingSpecies, IsodesmicRingScheme
+from arkane.encorr.isodesmic import ErrorCancelingSpecies, IsodesmicRingScheme
 from arkane.output import prettify
 from arkane.reference import ReferenceDatabase
 from arkane.thermo import ThermoJob

@@ -39,8 +39,8 @@ import numpy as np
 from rmgpy.molecule import Molecule
 from rmgpy.species import Species
 
-from arkane.isodesmic import ErrorCancelingScheme, ErrorCancelingSpecies, ErrorCancelingReaction, IsodesmicScheme, \
-    SpeciesConstraints
+from arkane.encorr.isodesmic import ErrorCancelingScheme, ErrorCancelingSpecies, ErrorCancelingReaction, \
+    IsodesmicScheme, SpeciesConstraints
 
 ################################################################################
 

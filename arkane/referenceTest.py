@@ -36,7 +36,7 @@ import os
 import unittest
 import shutil
 
-from arkane.isodesmic import ErrorCancelingSpecies
+from arkane.encorr.isodesmic import ErrorCancelingSpecies
 from arkane.reference import ReferenceSpecies, ReferenceDataEntry, CalculatedDataEntry, ReferenceDatabase
 from rmgpy.quantity import ArrayQuantity, ScalarQuantity
 from rmgpy.species import Species

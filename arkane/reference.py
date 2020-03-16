@@ -41,7 +41,7 @@ from collections import namedtuple
 import yaml
 
 from arkane.common import ArkaneSpecies, ARKANE_CLASS_DICT, symbol_by_number
-from arkane.isodesmic import ErrorCancelingSpecies
+from arkane.encorr.isodesmic import ErrorCancelingSpecies
 from arkane.util import read_supporting_information
 from rmgpy import settings
 from rmgpy.molecule import Molecule
