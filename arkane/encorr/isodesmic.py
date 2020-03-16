@@ -178,8 +178,8 @@ class SpeciesConstraints:
         species that have additional atom, bond, and/or ring attributes not found in the target molecule.
 
         Args:
-            target (ErrorCancelingSpecies): Molecule object for the target of the error canceling reaction scheme
-            reference_list(:obj:`list` of :obj:`ErrorCancelingSpecies`): A list of molecule objects for the reference
+            target (ErrorCancelingSpecies): The target species of the error canceling reaction scheme
+            reference_list(list): A list of ErrorCancelingSpecies objects for the reference
                 species that can participate in the error canceling reaction scheme
             conserve_bonds (bool, optional): Enforce the number of each bond type be conserved
             conserve_ring_size (bool, optional): Enforce that the number of each ring size be conserved
@@ -244,8 +244,9 @@ class SpeciesConstraints:
         Calculate the constraint vector for the target and the constraint matrix for all allowable reference species
 
         Returns:
-            np.ndarray: target constraint vector (1xn_constraints)
-            np.ndarray: constraint matrix for allowable reference species (len(self.reference_species)xn_constraints)
+            tuple(np.ndarray, np.ndarray)
+            - target constraint vector (1 x len(constraints))
+            - constraint matrix for allowable reference species (len(self.reference_species) x len(constraints))
         """
         target_constraints = self._enumerate_constraints(self.target)
         constraint_matrix = []
