@@ -222,13 +222,13 @@ class TestErrorCancelingScheme(unittest.TestCase):
         scheme = IsodesmicScheme(self.propene, [self.propane, self.butane, self.butene, self.caffeine, self.ethyne])
 
         # Note that caffeine and ethyne will not be allowed, so for the full set the indices are [0, 1, 2]
-        rxn, _ = scheme._find_error_canceling_reaction([0, 1, 2], milp_software='lpsolve')
+        rxn, _ = scheme._find_error_canceling_reaction([0, 1, 2], milp_software=['lpsolve'])
         self.assertEqual(rxn.species[self.butane], -1)
         self.assertEqual(rxn.species[self.propane], 1)
         self.assertEqual(rxn.species[self.butene], 1)
 
         if self.pyo is not None:
-            rxn, _ = scheme._find_error_canceling_reaction([0, 1, 2], milp_software='pyomo')
+            rxn, _ = scheme._find_error_canceling_reaction([0, 1, 2], milp_software=['pyomo'])
             self.assertEqual(rxn.species[self.butane], -1)
             self.assertEqual(rxn.species[self.propane], 1)
             self.assertEqual(rxn.species[self.butene], 1)
@@ -250,7 +250,7 @@ class TestErrorCancelingScheme(unittest.TestCase):
 
         if self.pyo is not None:
             # pyomo is slower, so don't test as many
-            reaction_list = scheme.multiple_error_canceling_reaction_search(n_reactions_max=5, milp_software='pyomo')
+            reaction_list = scheme.multiple_error_canceling_reaction_search(n_reactions_max=5, milp_software=['pyomo'])
             self.assertEqual(len(reaction_list), 5)
             reaction_string = reaction_list.__repr__()
             self.assertTrue(any(rxn_string in reaction_string for rxn_string in [rxn_str1, rxn_str2]))
@@ -262,12 +262,12 @@ class TestErrorCancelingScheme(unittest.TestCase):
         scheme = IsodesmicScheme(self.propene, [self.propane, self.butane, self.butene, self.pentane, self.pentene,
                                                 self.hexane, self.hexene, self.benzene])
 
-        target_thermo, rxn_list = scheme.calculate_target_enthalpy(n_reactions_max=3, milp_software='lpsolve')
+        target_thermo, rxn_list = scheme.calculate_target_enthalpy(n_reactions_max=3, milp_software=['lpsolve'])
         self.assertEqual(target_thermo.value_si, 115000.0)
         self.assertIsInstance(rxn_list[0], ErrorCancelingReaction)
 
         if self.pyo is not None:
-            target_thermo, _ = scheme.calculate_target_enthalpy(n_reactions_max=3, milp_software='pyomo')
+            target_thermo, _ = scheme.calculate_target_enthalpy(n_reactions_max=3, milp_software=['pyomo'])
             self.assertEqual(target_thermo.value_si, 115000.0)
 
 
