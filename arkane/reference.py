@@ -51,7 +51,8 @@ from rmgpy.thermo import ThermoData
 
 
 # Module level constants
-REFERENCE_DB_PATH = os.path.join(settings['database.directory'], 'reference_sets/main')
+REFERENCE_DB_PATH = os.path.join(settings['database.directory'], 'reference_sets')
+MAIN_REFERENCE_PATH = os.path.join(REFERENCE_DB_PATH, 'main')
 
 
 class ReferenceSpecies(ArkaneSpecies):
@@ -147,7 +148,7 @@ class ReferenceSpecies(ArkaneSpecies):
             raise ValueError('Calculated data must be given as a dictionary of the model chemistry (string) and '
                              'associated CalculatedDataEntry object')
 
-    def save_yaml(self, path=REFERENCE_DB_PATH):
+    def save_yaml(self, path=MAIN_REFERENCE_PATH):
         """
         Save the reference species to a .yml file
         """
@@ -196,6 +197,13 @@ class ReferenceSpecies(ArkaneSpecies):
             supporting_info_path (str): Path to 'supporting_information.csv' for the species, which is used to read in
                 the unscaled frequencies, electronic energy, and T1 diagnostic if they exist
         """
+        # First, check that the species matches
+        if not self.species.is_isomorphic(arkane_species.species):
+            raise ValueError(f'Cannot update reference species {self} from arkane species {arkane_species}, as these '
+                             f'species are not isomorphic. The reference species has adjacency list:\n'
+                             f'{self.species.to_adjacency_list()}\nWhile the arkane species has adjacency list:\n'
+                             f'{arkane_species.species.to_adjacency_list()}')
+
         thermo_data = arkane_species.thermo_data
         # Only store H298 and S298 data
         thermo_data.Cpdata = None
@@ -238,7 +246,7 @@ class ReferenceSpecies(ArkaneSpecies):
         if model_chemistry not in self.calculated_data:
             raise KeyError(f'Model chemistry `{model_chemistry}` not available for species {self}')
 
-        molecule = Molecule(smiles=self.smiles)
+        molecule = Molecule().from_adjacency_list(self.adjacency_list)
 
         reference_enthalpy = self.get_reference_enthalpy(source=source)
         low_level_h298 = self.calculated_data[model_chemistry].thermo_data.H298
@@ -448,14 +456,14 @@ class ReferenceDatabase(object):
         Load one or more set of reference species and append it on to the database
 
         Args:
-            paths (Union[list, str]): A single path string, or a list of path strings pointing to a set of reference
+            paths (list): A single path string, or a list of path strings pointing to a set of reference
                 species to be loaded into the database. The string should point to the folder that has the name of the
                 reference set. The name of sub-folders in a reference set directory should be indices starting from 0
                 and should contain a YAML file that defines the ReferenceSpecies object of that index, named {index}.yml
             ignore_incomplete (bool): If ``True`` only species with both reference and calculated data will be added.
         """
         if paths is None:  # Default to the main reference set in RMG-database
-            paths = [REFERENCE_DB_PATH]
+            paths = [MAIN_REFERENCE_PATH]
 
         if isinstance(paths, str):  # Convert to a list with one element
             paths = [paths]
@@ -490,6 +498,20 @@ class ReferenceDatabase(object):
                     reference_set.append(ref_spcs)
 
             self.reference_sets[set_name] = reference_set
+
+    def save(self, database_root_path=None):
+        """
+
+        Args:
+            database_root_path (str): Path to the reference set parent folder (typical subfolders include 'main' etc.)
+        """
+        if database_root_path is None:
+            database_root_path = REFERENCE_DB_PATH
+
+        for set_name, reference_set in self.reference_sets.items():
+            set_path = os.path.join(database_root_path, set_name)
+            for spcs in reference_set:
+                spcs.save_yml(path=set_path)
 
     def extract_model_chemistry(self, model_chemistry, sets=None, as_error_canceling_species=True):
         """
