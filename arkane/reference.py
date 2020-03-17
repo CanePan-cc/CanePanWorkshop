@@ -30,7 +30,6 @@
 
 """
 This module defines the ReferenceSpecies class, which are used in isodesmic reaction calculations
-
 """
 
 import logging
@@ -88,13 +87,13 @@ class ReferenceSpecies(ArkaneSpecies):
         """
 
         if species is None:
-            if smiles:
+            if adjacency_list:
+                species = Species().from_adjacency_list(adjacency_list, raise_atomtype_exception=False,
+                                                        raise_charge_exception=False)
+            elif smiles:
                 species = Species(smiles=smiles)
             elif inchi:
                 species = Species(inchi=inchi)
-            elif adjacency_list:
-                species = Species().from_adjacency_list(adjacency_list, raise_atomtype_exception=False,
-                                                        raise_charge_exception=False)
             else:
                 raise ValueError('Either an rmgpy species object, smiles string, InChI string, or an adjacency list '
                                  'must be given to create a ReferenceSpecies object')

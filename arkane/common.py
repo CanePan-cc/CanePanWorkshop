@@ -60,6 +60,27 @@ from arkane.pdep import PressureDependenceJob
 
 ################################################################################
 
+# Class dictionary for recreating objects from YAML files. This is needed elsewhere, so store as a module level variable
+ARKANE_CLASS_DICT = {'ScalarQuantity': ScalarQuantity,
+                     'ArrayQuantity': ArrayQuantity,
+                     'Conformer': Conformer,
+                     'LinearRotor': LinearRotor,
+                     'NonlinearRotor': NonlinearRotor,
+                     'KRotor': KRotor,
+                     'SphericalTopRotor': SphericalTopRotor,
+                     'HinderedRotor': HinderedRotor,
+                     'FreeRotor': FreeRotor,
+                     'IdealGasTranslation': IdealGasTranslation,
+                     'HarmonicOscillator': HarmonicOscillator,
+                     'TransportData': TransportData,
+                     'SingleExponentialDown': SingleExponentialDown,
+                     'Wilhoit': Wilhoit,
+                     'NASA': NASA,
+                     'NASAPolynomial': NASAPolynomial,
+                     'ThermoData': ThermoData,
+                     'np_array': np.array,
+                     }
+
 
 # Add a custom string representer to use block literals for multiline strings
 def str_repr(dumper, data):
@@ -108,6 +129,7 @@ class ArkaneSpecies(RMGObject):
         self.xyz = xyz
         self.molecular_weight = molecular_weight
         self.symmetry_number = symmetry_number
+        self.charge = charge
         self.multiplicity = multiplicity
         self.is_ts = is_ts if is_ts is not None else isinstance(species, TransitionState)
         if not self.is_ts:
@@ -120,7 +142,6 @@ class ArkaneSpecies(RMGObject):
             self.energy_transfer_model = energy_transfer_model
             self.thermo = thermo
             self.thermo_data = thermo_data
-            self.charge = charge
             self.formula = formula
         else:
             # initialize TS-related attributes
@@ -713,24 +734,3 @@ def get_principal_moments_of_inertia(coords, numbers=None, symbols=None):
     principal_moments_of_inertia, axes = zip(*sorted(zip(np.ndarray.tolist(principal_moments_of_inertia),
                                                          np.ndarray.tolist(axes)), reverse=True))
     return principal_moments_of_inertia, axes
-
-# Class dictionary for recreating objects from YAML files. This is needed elsewhere, so store as a module level variable
-ARKANE_CLASS_DICT = {'ScalarQuantity': ScalarQuantity,
-                     'ArrayQuantity': ArrayQuantity,
-                     'Conformer': Conformer,
-                     'LinearRotor': LinearRotor,
-                     'NonlinearRotor': NonlinearRotor,
-                     'KRotor': KRotor,
-                     'SphericalTopRotor': SphericalTopRotor,
-                     'HinderedRotor': HinderedRotor,
-                     'FreeRotor': FreeRotor,
-                     'IdealGasTranslation': IdealGasTranslation,
-                     'HarmonicOscillator': HarmonicOscillator,
-                     'TransportData': TransportData,
-                     'SingleExponentialDown': SingleExponentialDown,
-                     'Wilhoit': Wilhoit,
-                     'NASA': NASA,
-                     'NASAPolynomial': NASAPolynomial,
-                     'ThermoData': ThermoData,
-                     'np_array': np.array,
-                     }
