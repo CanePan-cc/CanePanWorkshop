@@ -76,7 +76,7 @@ class ReferenceSpecies(ArkaneSpecies):
             calculated_data (dict): Formatted as {'model_chemistry': CalculatedDataEntry, ...}
             preferred_reference (str): The source string key for the reference data to use for isodesmic reactions
             index (int): Index of this species in the database of reference species located at
-                `RMG-database/input/reference_sets/`
+                ``RMG-database/input/reference_sets/``
             label (str): A user defined label for easily identifying the species
             cas_number (str): CAS number associated with the reference species
             symmetry_number (int): The true symmetry number of the species (if not provided will default to the number
@@ -238,7 +238,7 @@ class ReferenceSpecies(ArkaneSpecies):
             source (str): Reference data source to take the high level data from
 
         Raises:
-            KeyError: If `model_chemistry` is not available for this reference species
+            KeyError: If ``model_chemistry`` is not available for this reference species
 
         Returns:
             ErrorCancelingSpecies
@@ -293,7 +293,7 @@ class ReferenceSpecies(ArkaneSpecies):
         Obtain the preferred reference data source for the species
 
         Notes:
-            If the 'preferred_source` attribute is set, return it,
+            If the ``preferred_source`` attribute is set, return it,
             otherwise use the source with the lowest non-zero uncertainty.
 
         Returns:
@@ -319,7 +319,7 @@ class ReferenceSpecies(ArkaneSpecies):
         quantum chemistry calculations
 
         Notes:
-            The attribute `default_xyz_chemistry` must be set for this reference species, preferable to a model
+            The attribute ``default_xyz_chemistry`` must be set for this reference species, preferable to a model
             chemistry with a highly accurate equilibrium geometry
 
         Returns:
@@ -521,11 +521,11 @@ class ReferenceDatabase(object):
         Args:
             model_chemistry (str): String that describes the level of chemistry used to calculate the low level data
             sets (list): A list of the names of the reference sets to include (all sets in the database will be used if
-                not specified or `None`)
+                not specified or ``None``)
             as_error_canceling_species (bool): Return ErrorCancelingSpecies objects if True
 
         Returns:
-            List[ErrorCancelingSpecies]
+            list
         """
         reference_list = []
 
@@ -552,10 +552,10 @@ class ReferenceDatabase(object):
 
         Args:
             sets (list): A list of the names of the reference sets to include (all sets in the database will be used if
-                not specified or `None`)
+                not specified or ``None``)
 
         Returns:
-            List[str]
+            list
         """
         model_chemistry_set = set()
         if sets is None:  # Load in all of the sets
@@ -573,11 +573,11 @@ class ReferenceDatabase(object):
         Returns a list of reference species from the requested reference set that matches the indices in order
 
         Args:
-            indices (List(int)): A list of reference species indices to return (in order)
+            indices (list): A list of reference species indices to return (in order)
             set_name (str): The name of the reference set to search in (only one set)
 
         Returns:
-            List
+            list
         """
         if not isinstance(indices, list):
             indices = [indices]
@@ -601,11 +601,11 @@ class ReferenceDatabase(object):
         Returns a list of reference species from the requested reference set that matches the labels in order
 
         Args:
-            labels (List(str)): A list of labels that match the returned reference species (in order)
+            labels (list): A list of labels that match the returned reference species (in order)
             set_name (str): The name of the reference set to search in (only one set)
 
         Returns:
-            List
+            list
         """
         if not isinstance(labels, list):
             labels = [labels]

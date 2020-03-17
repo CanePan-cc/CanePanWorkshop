@@ -153,7 +153,6 @@ class ErrorCancelingReaction:
 
         Returns:
             rmgpy.quantity.ScalarQuantity: Hf298 in 'J/mol' estimated for the target species
-
         """
         low_level_h_rxn = sum(spec[0].low_level_hf298.value_si*spec[1] for spec in self.species.items()) - \
             self.target.low_level_hf298.value_si
@@ -270,7 +269,7 @@ class ErrorCancelingScheme:
 
         Args:
             target (ErrorCancelingSpecies): Species whose Hf298 will be calculated using error canceling reactions
-            reference_set (:obj:`list` of :obj:`ErrorCancelingSpecies`): list of reference species that can participate
+            reference_set (list): list of reference species (as ErrorCancelingSpecies) that can participate
                 in error canceling reactions to help calculate the thermochemistry of the target
             conserve_bonds (bool): Flag to determine if the number and type of each bond must be conserved in each error
                 canceling reaction

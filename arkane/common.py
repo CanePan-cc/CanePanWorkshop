@@ -381,7 +381,6 @@ def expand_formatted_blocks(data_dictionary):
 
     Returns:
         dict: Dictionary representation of an ArkaneSpecies object with all formatted blocks properly unpacked
-
     """
     expandable_blocks = ['Identifiers', 'Properties']
     new_data = {attr: value for attr, value in data_dictionary.items() if attr not in expandable_blocks}
